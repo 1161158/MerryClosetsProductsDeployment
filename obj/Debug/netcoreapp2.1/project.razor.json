@@ -1,0 +1,14 @@
+{
+  "ProjectFilePath": "c:\\Users\\diogo\\Documents\\CDIO-S5\\cdio-il2018-19sem5-grupo1\\MerryClosetsSolution\\MerryClosets\\MerryClosets.csproj",
+  "TargetFramework": "netcoreapp2.1",
+  "TagHelpers": [],
+  "Configuration": {
+    "ConfigurationName": "MVC-2.1",
+    "LanguageVersion": "2.1",
+    "Extensions": [
+      {
+        "ExtensionName": "MVC-2.1"
+      }
+    ]
+  }
+}
