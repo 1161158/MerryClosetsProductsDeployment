@@ -70,7 +70,7 @@ namespace MerryClosets
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseCors(builder => builder.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod());
+            app.UseCors(builder => builder.WithOrigins("https://merryclosetsstore.herokuapp.com").AllowAnyHeader().AllowAnyMethod());
             app.UseCors(builder => builder.WithOrigins("http://localhost:8000").AllowAnyHeader().AllowAnyMethod());
             app.UseMvc();
         }
