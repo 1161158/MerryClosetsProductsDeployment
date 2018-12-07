@@ -21,14 +21,14 @@ namespace MerryClosets.Utils
             _filePath = Path.GetFullPath(@"LoggerFiles/log.txt");
         }
 
-        private void writeLogToFile(EventId logId, string message, LogLevel logLevel, params object[] args)
+        private void writeLogToFile(string userRef, EventId logId, string message, LogLevel logLevel, params object[] args)
         {
             string timestamp = DateUtils.GetCurrentDateTimestamp();
             string logMessageFormated = String.Format(message, args);
 
             int level = (int)logLevel;
 
-            string formated = String.Format("[{0} {1}]:     EVENTID: {2}    MESSAGE: {3}\n", timestamp, _logLevels[level], logId.ToString(), logMessageFormated);
+            string formated = String.Format("USERREF: {1}    [{1} {2}]:     EVENTID: {3}    MESSAGE: {4}\n", userRef, timestamp, _logLevels[level], logId.ToString(), logMessageFormated);
 
             DirectoryInfo di = Directory.CreateDirectory(_fileDirectory);
 
@@ -38,40 +38,40 @@ namespace MerryClosets.Utils
             }
         }
 
-        public void logInformation(EventId logId, string message, params object[] args)
+        public void logInformation(string userRef, EventId logId, string message, params object[] args)
         {
             _logger.LogInformation(logId, message, args); //write logger to the console
-            writeLogToFile(logId, message, LogLevel.Information, args);
+            writeLogToFile(userRef, logId, message, LogLevel.Information, args);
         }
 
-        public void logDebug(EventId logId, string message, params object[] args)
+        public void logDebug(string userRef, EventId logId, string message, params object[] args)
         {
             _logger.LogDebug(logId, message, args); //write logger to the console
-            writeLogToFile(logId, message, LogLevel.Debug, args);
+            writeLogToFile(userRef, logId, message, LogLevel.Debug, args);
         }
 
-        public void logError(EventId logId, string message, params object[] args)
+        public void logError(string userRef, EventId logId, string message, params object[] args)
         {
             _logger.LogError(logId, message, args); //write logger to the console
-            writeLogToFile(logId, message, LogLevel.Error, args);
+            writeLogToFile(userRef, logId, message, LogLevel.Error, args);
         }
 
-        public void logTrace(EventId logId, string message, params object[] args)
+        public void logTrace(string userRef, EventId logId, string message, params object[] args)
         {
             _logger.LogTrace(logId, message, args); //write logger to the console
-            writeLogToFile(logId, message, LogLevel.Trace, args);
+            writeLogToFile(userRef, logId, message, LogLevel.Trace, args);
         }
 
-        public void logWarning(EventId logId, string message, params object[] args)
+        public void logWarning(string userRef, EventId logId, string message, params object[] args)
         {
             _logger.LogWarning(logId, message, args); //write logger to the console
-            writeLogToFile(logId, message, LogLevel.Warning, args);
+            writeLogToFile(userRef, logId, message, LogLevel.Warning, args);
         }
 
-        public void logCritical(EventId logId, string message, params object[] args)
+        public void logCritical(string userRef, EventId logId, string message, params object[] args)
         {
             _logger.LogCritical(logId, message, args); //write logger to the console
-            writeLogToFile(logId, message, LogLevel.Critical, args);
+            writeLogToFile(userRef, logId, message, LogLevel.Critical, args);
         }
     }
 }

@@ -12665,11 +12665,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\diogo\\Documents\\CDIO-S5\\cdio-il2018-19sem5-grupo1\\MerryClosetsSolution\\MerryClosets\\MerryClosets.csproj",
+      "projectUniqueName": "C:\\Users\\diogo\\Documents\\MerryClosetsDeployment\\MerryClosetsProductsDeployment\\MerryClosets.csproj",
       "projectName": "MerryClosets",
-      "projectPath": "c:\\Users\\diogo\\Documents\\CDIO-S5\\cdio-il2018-19sem5-grupo1\\MerryClosetsSolution\\MerryClosets\\MerryClosets.csproj",
+      "projectPath": "C:\\Users\\diogo\\Documents\\MerryClosetsDeployment\\MerryClosetsProductsDeployment\\MerryClosets.csproj",
       "packagesPath": "C:\\Users\\diogo\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\diogo\\Documents\\CDIO-S5\\cdio-il2018-19sem5-grupo1\\MerryClosetsSolution\\MerryClosets\\obj\\",
+      "outputPath": "C:\\Users\\diogo\\Documents\\MerryClosetsDeployment\\MerryClosetsProductsDeployment\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
