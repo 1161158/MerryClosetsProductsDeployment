@@ -12652,6 +12652,8 @@
       "AutoMapper.Extensions.Microsoft.DependencyInjection >= 5.0.1",
       "JsonSubTypes >= 1.5.1",
       "Microsoft.AspNetCore.App >= 2.1.1",
+      "Microsoft.AspNetCore.Cors >= 2.1.1",
+      "Microsoft.AspNetCore.Http.Abstractions >= 2.1.1",
       "Microsoft.EntityFrameworkCore.SQLite >= 2.1.4",
       "Microsoft.EntityFrameworkCore.SqlServer >= 2.1.4",
       "Microsoft.NETCore.App >= 2.1.0",
@@ -12714,6 +12716,14 @@
             "target": "Package",
             "version": "[2.1.1, )",
             "autoReferenced": true
+          },
+          "Microsoft.AspNetCore.Cors": {
+            "target": "Package",
+            "version": "[2.1.1, )"
+          },
+          "Microsoft.AspNetCore.Http.Abstractions": {
+            "target": "Package",
+            "version": "[2.1.1, )"
           },
           "Microsoft.EntityFrameworkCore.SQLite": {
             "target": "Package",

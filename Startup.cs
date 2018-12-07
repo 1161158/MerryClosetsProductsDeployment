@@ -9,6 +9,7 @@ using MerryClosets.Models.DTO;
 using MerryClosets.Models.Product;
 using Newtonsoft.Json;
 using MerryClosets.Models.Restriction;
+using Microsoft.AspNetCore.Cors;
 
 namespace MerryClosets
 {
@@ -50,6 +51,8 @@ namespace MerryClosets
             services.AddMvc(); //.SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddAutoMapper();
+
+            services.AddCors();
 
             int chosenDB = Configuration.GetValue("ChosenDB", 0);
             DataConfiguration.configure((DataProviderEnum)chosenDB, Configuration, services);
