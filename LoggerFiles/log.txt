@@ -19520,3 +19520,7 @@ Description of category => New description '' is not valid!
 [07 December 2018 03:56:25 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: teste2
 [07 December 2018 04:21:48 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: teste2
 [07 December 2018 04:37:02 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: teste2
+USERREF: 07 December 2018 07:58:18    [07 December 2018 07:58:18 INFORMATION]:     EVENTID: 1003    MESSAGE: Creating By Dto: 1
+USERREF: 07 December 2018 07:58:19    [07 December 2018 07:58:19 INFORMATION]:     EVENTID: 2003    MESSAGE: Creating Category Succeeded: 1
+USERREF: 1    [07 December 2018 08:01:44 INFORMATION]:     EVENTID: 1003    MESSAGE: Creating By Dto: 1
+USERREF: 1    [07 December 2018 08:01:45 INFORMATION]:     EVENTID: 2003    MESSAGE: Creating Category Succeeded: 1

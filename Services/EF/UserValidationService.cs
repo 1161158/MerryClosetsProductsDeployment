@@ -22,6 +22,10 @@ namespace MerryClosets.Services.EF {
             public string[] roles;
         }
 
+        private class RefResult {
+            public string userRef;
+        }
+
         static HttpClient client = new HttpClient();
 
         public async Task<bool> validateContentManager(string tokenString) {
@@ -54,7 +58,7 @@ namespace MerryClosets.Services.EF {
 
             if (statusCode == HttpStatusCode.OK)
             {
-                var result = await response.Content.ReadAsAsync<ValidationResult>();
+                var result = await response.Content.ReadAsAsync<RefResult>();
                 return result.userRef;
             }
 

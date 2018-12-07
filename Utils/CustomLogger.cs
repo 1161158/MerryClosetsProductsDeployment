@@ -28,7 +28,7 @@ namespace MerryClosets.Utils
 
             int level = (int)logLevel;
 
-            string formated = String.Format("USERREF: {1}    [{1} {2}]:     EVENTID: {3}    MESSAGE: {4}\n", userRef, timestamp, _logLevels[level], logId.ToString(), logMessageFormated);
+            string formated = String.Format("USERREF: {0}    [{1} {2}]:     EVENTID: {3}    MESSAGE: {4}\n", userRef, timestamp, _logLevels[level], logId.ToString(), logMessageFormated);
 
             DirectoryInfo di = Directory.CreateDirectory(_fileDirectory);
 
