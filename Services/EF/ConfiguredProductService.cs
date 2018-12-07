@@ -327,6 +327,7 @@ namespace MerryClosets.Services.EF
                     return validationOutput;
                 }
                 ConfiguredProduct cpd = _configuredProductRepository.GetByReference(dto.ParentReference);
+                validationOutput = new ValidationOutputBadRequest();
                 foreach (var slot in cpd.ConfiguredSlots)
                 {
                     if (string.Equals(slot.Reference, dto.SlotReference, StringComparison.Ordinal))

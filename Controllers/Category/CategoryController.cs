@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore.ValueGeneration.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using System;
+using System.Threading.Tasks;
 
 namespace MerryClosets.Controllers.Category
 {
@@ -20,10 +21,12 @@ namespace MerryClosets.Controllers.Category
         private readonly ICategoryService _categoryService;
         private readonly IProductService _productService;
         private readonly CustomLogger _logger;
-        public CategoryController(ICategoryService categoryService, IProductService productService, ILogger<ICategoryService> logger)
+        private readonly IUserValidationService _userValidationService;
+        public CategoryController(ICategoryService categoryService, IProductService productService, IUserValidationService userValidationService, ILogger<ICategoryService> logger)
         {
             _categoryService = categoryService;
             _productService = productService;
+            _userValidationService = userValidationService;
             _logger = new CustomLogger(logger);
         }
 
@@ -33,9 +36,14 @@ namespace MerryClosets.Controllers.Category
          * POST method that will create a new category in the system.
          */
         [HttpPost]
-        public IActionResult CreateCategory([FromBody] CategoryDto categoryDto)
+        public async Task<IActionResult> CreateCategory([FromHeader(Name="Authorization")] string authorization, [FromBody] CategoryDto categoryDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             _logger.logInformation(LoggingEvents.PostItem, "Creating By Dto: {0}", categoryDto.Reference);
+
             ValidationOutput validationOutput = _categoryService.Register(categoryDto);
             if (validationOutput.HasErrors())
             {
@@ -177,8 +185,11 @@ namespace MerryClosets.Controllers.Category
          * PUT method that will update the name and the description of the category with the passed reference.
          */
         [HttpPut("{reference}")]
-        public IActionResult UpdateCategory([FromRoute] string reference, [FromBody] CategoryDto categoryDto)
+        public async Task<IActionResult> UpdateCategory([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] CategoryDto categoryDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
             _logger.logInformation(LoggingEvents.UpdateItem, "Updating By Reference: {0}", reference);
             ValidationOutput validationOutput = _categoryService.Update(reference, categoryDto);
             if (validationOutput.HasErrors())
@@ -212,8 +223,11 @@ namespace MerryClosets.Controllers.Category
          * DELETE method that will delete the category with the passed reference.
          */
         [HttpDelete("{reference}")]
-        public IActionResult DeleteCategory([FromRoute] string reference)
+        public async Task<IActionResult> DeleteCategory([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
             _logger.logInformation(LoggingEvents.SoftDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _categoryService.Remove(reference);
             if (validationOutput.HasErrors())

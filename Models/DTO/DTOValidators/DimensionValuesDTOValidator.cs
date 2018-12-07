@@ -34,6 +34,7 @@ namespace MerryClosets.Models.DTO.DTOValidators
                 if (eachValueValidationOutput.HasErrors())
                 {
                     validationOutput.Join(eachValueValidationOutput);
+                    return validationOutput;
                 }
 
                 validationOutput = new ValidationOutputBadRequest();
@@ -72,6 +73,7 @@ namespace MerryClosets.Models.DTO.DTOValidators
                 if (eachValueValidationOutput.HasErrors())
                 {
                     validationOutput.Join(eachValueValidationOutput);
+                    return validationOutput;
                 }
 
                 validationOutput = new ValidationOutputBadRequest();
@@ -110,6 +112,7 @@ namespace MerryClosets.Models.DTO.DTOValidators
                 if (eachValueValidationOutput.HasErrors())
                 {
                     validationOutput.Join(eachValueValidationOutput);
+                    return validationOutput;
                 }
 
                 validationOutput = new ValidationOutputBadRequest();

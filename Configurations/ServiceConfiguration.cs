@@ -20,6 +20,7 @@ namespace MerryClosets.Configurations
             services.AddTransient<ICatalogService, CatalogService>();
             services.AddTransient<ICollectionService, CollectionService>();
             services.AddTransient<IConfiguredProductService, ConfiguredProductService>();
+            services.AddTransient<IUserValidationService, UserValidationService>();
         }
     }
 }

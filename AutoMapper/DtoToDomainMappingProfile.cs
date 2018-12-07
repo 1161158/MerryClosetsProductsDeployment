@@ -39,9 +39,9 @@ namespace MerryClosets.AutoMapper
             CreateMap<MaterialFinishPartAlgorithmDto, MaterialFinishPartAlgorithm>();
             CreateMap<RatioAlgorithmDto, RatioAlgorithm>();
             CreateMap<SizePercentagePartAlgorithmDto, SizePercentagePartAlgorithm>();
-            CreateMap<AlgorithmDto, Algorithm>().Include<DimensionAlgorithmDto, DimensionAlgorithm>().Include<PartAlgorithmDto, PartAlgorithm>();
-            CreateMap<DimensionAlgorithmDto, DimensionAlgorithm>().Include<RatioAlgorithmDto, RatioAlgorithm>();
             CreateMap<PartAlgorithmDto, PartAlgorithm>().Include<SizePercentagePartAlgorithmDto, SizePercentagePartAlgorithm>().Include<MaterialFinishPartAlgorithmDto, MaterialFinishPartAlgorithm>();
+            CreateMap<DimensionAlgorithmDto, DimensionAlgorithm>().Include<RatioAlgorithmDto, RatioAlgorithm>();
+            CreateMap<AlgorithmDto, Algorithm>().Include<DimensionAlgorithmDto, DimensionAlgorithm>().Include<PartAlgorithmDto, PartAlgorithm>();
         }
 
     }

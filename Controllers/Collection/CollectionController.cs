@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using MerryClosets.Models.DTO;
 using MerryClosets.Services.Interfaces;
 using MerryClosets.Utils;
@@ -14,12 +15,14 @@ namespace MerryClosets.Controllers
         private ICollectionService _collectionService;
         private IConfiguredProductService _configuredProductService;
         private readonly CustomLogger _logger;
+        private readonly IUserValidationService _userValidationService;
 
-        public CollectionController(ICollectionService service, ILogger<ICategoryService> logger, IConfiguredProductService configuredProductService)
+        public CollectionController(IUserValidationService userValidationService, ICollectionService service, ILogger<ICategoryService> logger, IConfiguredProductService configuredProductService)
         {
             _collectionService = service;
             _configuredProductService = configuredProductService;
             _logger = new CustomLogger(logger);
+            _userValidationService = userValidationService;
         }
 
         // ========= POST METHODS =========
@@ -28,8 +31,12 @@ namespace MerryClosets.Controllers
          * POST method that will create a new collection in the system.
          */
         [HttpPost]
-        public IActionResult CreateCollection(CollectionDto collectionDto)
+        public async Task<IActionResult> CreateCollection([FromHeader(Name="Authorization")] string authorization, [FromBody] CollectionDto collectionDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.PostItem, "Creating By Dto: {0}", collectionDto.Reference);
             ValidationOutput validationOutput = _collectionService.Register(collectionDto);
             if (validationOutput.HasErrors())
@@ -61,8 +68,12 @@ namespace MerryClosets.Controllers
          * POST method that will add configured products to the collection with the passed reference.
          */
         [HttpPost("{reference}/configured-products")]
-        public IActionResult AddConfiguredProducts([FromRoute] string reference, [FromBody] IEnumerable<ProductCollectionDto> enumerableConfiguredProductReference)
+        public async Task<IActionResult> AddConfiguredProducts([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<ProductCollectionDto> enumerableConfiguredProductReference)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerableConfiguredProductReference);
@@ -143,8 +154,12 @@ namespace MerryClosets.Controllers
          * PUT method that will update the name and the description of the collection with the passed reference.
          */
         [HttpPut("{reference}")]
-        public IActionResult UpdateCollection([FromRoute] string reference, [FromBody] CollectionDto collectionDto)
+        public async Task<IActionResult> UpdateCollection([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] CollectionDto collectionDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.UpdateItem, "Updating By Reference: {0}", reference);
             ValidationOutput validationOutput = _collectionService.Update(reference, collectionDto);
             if (validationOutput.HasErrors())
@@ -178,8 +193,12 @@ namespace MerryClosets.Controllers
          * DELETE method that will delete the category with the passed reference.
          */
         [HttpDelete("{reference}")]
-        public IActionResult DeleteCollection([FromRoute] string reference)
+        public async Task<IActionResult> DeleteCollection([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.SoftDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _collectionService.Remove(reference);
             if (validationOutput.HasErrors())

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using MerryClosets.Models;
 using MerryClosets.Models.DTO;
 using MerryClosets.Models.Restriction;
@@ -22,13 +23,15 @@ namespace MerryClosets.Controllers.Product
         private readonly IMaterialService _materialService;
         private readonly ICategoryService _categoryService;
         private readonly CustomLogger _logger;
+        private readonly IUserValidationService _userValidationService;
 
-        public ProductController(IProductService productService, ILogger<ICategoryService> logger, IMaterialService materialService, ICategoryService categoryService)
+        public ProductController(IUserValidationService userValidationService, IProductService productService, ILogger<ICategoryService> logger, IMaterialService materialService, ICategoryService categoryService)
         {
             _productService = productService;
             _materialService = materialService;
             _categoryService = categoryService;
             _logger = new CustomLogger(logger);
+            _userValidationService = userValidationService;
 
         }
 
@@ -38,8 +41,12 @@ namespace MerryClosets.Controllers.Product
          * POST method that will create a new product in the system.
          */
         [HttpPost]
-        public IActionResult CreateProduct([FromBody] ProductDto productDto)
+        public async Task<IActionResult> CreateProduct([FromHeader(Name="Authorization")] string authorization, [FromBody] ProductDto productDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.PostItem, "Creating By Dto: {0}", productDto.Reference);
             ValidationOutput validationOutput = _productService.Register(productDto);
             if (validationOutput.HasErrors())
@@ -71,8 +78,12 @@ namespace MerryClosets.Controllers.Product
          * POST method that allows the addition of materials in which a product can be built, to the product with the passed reference.
          */
         [HttpPost("{reference}/materials")]
-        public IActionResult AddMaterials([FromRoute] string reference, [FromBody]  IEnumerable<ProductMaterialDto> enumerableProductMaterialDto)
+        public async Task<IActionResult> AddMaterials([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody]  IEnumerable<ProductMaterialDto> enumerableProductMaterialDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerableProductMaterialDto);
@@ -107,8 +118,12 @@ namespace MerryClosets.Controllers.Product
          * POST method that allows the addition of products which a product can be complemented with, to the product with the passed reference.
          */
         [HttpPost("{reference}/parts")]
-        public IActionResult AddParts([FromRoute] string reference, [FromBody] IEnumerable<PartDto> enumerablePartDto)
+        public async Task<IActionResult> AddParts([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<PartDto> enumerablePartDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerablePartDto);
@@ -143,8 +158,12 @@ namespace MerryClosets.Controllers.Product
          * POST method that allows the addition of dimension values to the product with the passed reference.
          */
         [HttpPost("{reference}/dimension-values")]
-        public IActionResult AddDimensionValues([FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> dimensionValuesDto)
+        public async Task<IActionResult> AddDimensionValues([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> dimensionValuesDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             object[] array = new object[2];
             
             array[0] = reference;
@@ -191,7 +210,11 @@ namespace MerryClosets.Controllers.Product
         }
 
         [HttpPost("{reference}/restriction")]
-        public IActionResult AddRestriction([FromRoute] string reference, [FromBody] AlgorithmDto restriction){
+        public async  Task<IActionResult> AddRestriction([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] AlgorithmDto restriction){
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             object[] array = new object[2];
             array[0] = reference;
             array[1] = restriction.ToString();
@@ -337,8 +360,12 @@ namespace MerryClosets.Controllers.Product
          * PUT method that will update the name, the description and the price of the product with the passed reference.
          */
         [HttpPut("{reference}")]
-        public IActionResult UpdateProduct([FromRoute] string reference, [FromBody] ProductDto productDto)
+        public async Task<IActionResult> UpdateProduct([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] ProductDto productDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.UpdateItem, "Updating By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.Update(reference, productDto);
             if (validationOutput.HasErrors())
@@ -372,8 +399,12 @@ namespace MerryClosets.Controllers.Product
          * DELETE method that will soft-delete the product with the passed reference.
          */
         [HttpDelete("{reference}")]
-        public IActionResult DeleteProduct([FromRoute] string reference)
+        public async Task<IActionResult> DeleteProduct([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.SoftDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.Remove(reference);
             if (validationOutput.HasErrors())
@@ -405,8 +436,12 @@ namespace MerryClosets.Controllers.Product
          * DELETE method that will delete the list of passed materials from the product with the passed reference.
          */
         [HttpDelete("{reference}/materials")]
-        public IActionResult DeleteMaterials([FromRoute] string reference, [FromBody]  IEnumerable<MaterialDto> enumerableMaterial)
+        public async Task<IActionResult> DeleteMaterials([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody]  IEnumerable<MaterialDto> enumerableMaterial)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.DeleteMaterialsAndRespectiveAlgorithms(reference, enumerableMaterial);
             if (validationOutput.HasErrors())
@@ -438,8 +473,12 @@ namespace MerryClosets.Controllers.Product
          * DELETE method that will delete the list of passed parts from the product with the passed reference.
          */
         [HttpDelete("{reference}/parts")]
-        public IActionResult DeleteParts([FromRoute] string reference, [FromBody] IEnumerable<ProductDto> enumerableProductReference)
+        public async Task<IActionResult> DeleteParts([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<ProductDto> enumerableProductReference)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.DeleteProductsAndRespectiveAlgorithms(reference, enumerableProductReference);
             if (validationOutput.HasErrors())
@@ -471,8 +510,12 @@ namespace MerryClosets.Controllers.Product
          * DELETE method that will delete the list of dimension values from the product with the passed reference.
          */
         [HttpDelete("{reference}/dimension-values")]
-        public IActionResult DeleteDimensionValues([FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
+        public async Task<IActionResult> DeleteDimensionValues([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.DeleteVariousDimensionValues(reference, enumerableDimensionValuesDto);
             if (validationOutput.HasErrors())

@@ -8,6 +8,7 @@ using MerryClosets.Models.Material;
 using MerryClosets.Utils;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Threading.Tasks;
 
 namespace MerryClosets.Controllers.Material
 {
@@ -18,12 +19,14 @@ namespace MerryClosets.Controllers.Material
         private readonly IMaterialService _materialService;
         private readonly IProductService _productService;
         private readonly CustomLogger _logger;
+        private readonly IUserValidationService _userValidationService;
 
         public MaterialController(IMaterialService materialService, ILogger<ICategoryService> logger,
-            IProductService productService)
+            IProductService productService, IUserValidationService userValidationService)
         {
             _materialService = materialService;
             _productService = productService;
+            _userValidationService = userValidationService;
             _logger = new CustomLogger(logger);
         }
 
@@ -33,8 +36,12 @@ namespace MerryClosets.Controllers.Material
          * POST method that will create a new material in the system.
          */
         [HttpPost]
-        public IActionResult CreateMaterial([FromBody] MaterialDto materialDto)
+        public async Task<IActionResult> CreateMaterial([FromHeader(Name="Authorization")] string authorization, [FromBody] MaterialDto materialDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.PostItem, "Creating By Dto: {0}", materialDto.Reference);
             ValidationOutput validationOutput = _materialService.Register(materialDto);
             if (validationOutput.HasErrors())
@@ -70,9 +77,13 @@ namespace MerryClosets.Controllers.Material
          * POST method that will add new colors to the material with the passed reference.
          */
         [HttpPost("{reference}/colors")]
-        public IActionResult AddColors([FromRoute] string reference,
+        public async Task<IActionResult> AddColors([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<ColorDto> enumerableColorDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerableColorDto);
@@ -109,9 +120,13 @@ namespace MerryClosets.Controllers.Material
          * POST method that will add new finishes to the material with the passed reference.
          */
         [HttpPost("{reference}/finishes")]
-        public IActionResult AddFinishes([FromRoute] string reference,
+        public async Task<IActionResult> AddFinishes([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<FinishDto> enumerableFinishDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerableFinishDto);
@@ -145,9 +160,13 @@ namespace MerryClosets.Controllers.Material
         }
 
         [HttpPost("{reference}/price-date-items")]
-        public IActionResult AddPriceDateItems([FromRoute] string reference,
+        public async Task<IActionResult> AddPriceDateItems([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<PriceHistoryDto> enumerablePriceHistory)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerablePriceHistory);
@@ -182,9 +201,13 @@ namespace MerryClosets.Controllers.Material
         }
 
         [HttpPost("{materialReference}/finishes/{finishReference}/price-date-items")]
-        public IActionResult AddPriceDateItems([FromRoute] string materialReference, string finishReference,
+        public async Task<IActionResult> AddPriceDateItems([FromHeader(Name="Authorization")] string authorization, [FromRoute] string materialReference, string finishReference,
             [FromBody] IEnumerable<PriceHistoryDto> enumerablePriceHistory)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             object[] array = new object[3];
             array[0] = materialReference;
             array[1] = finishReference;
@@ -309,8 +332,12 @@ namespace MerryClosets.Controllers.Material
          * PUT method that will update the name, the description and the price of the material with the passed reference.
          */
         [HttpPut("{reference}")]
-        public IActionResult UpdateMaterial([FromRoute] string reference, [FromBody] MaterialDto materialDto)
+        public async Task<IActionResult> UpdateMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] MaterialDto materialDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             _logger.logInformation(LoggingEvents.UpdateItem, "Updating By Reference: {0}", reference);
             ValidationOutput validationOutput = _materialService.Update(reference, materialDto);
             if (validationOutput.HasErrors())
@@ -346,8 +373,12 @@ namespace MerryClosets.Controllers.Material
         // ========= DELETE METHODS =========
 
         [HttpDelete("{reference}")]
-        public IActionResult DeleteMaterial([FromRoute] string reference)
+        public async Task<IActionResult> DeleteMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             _logger.logInformation(LoggingEvents.SoftDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _materialService.Remove(reference);
             if (validationOutput.HasErrors())
@@ -379,9 +410,13 @@ namespace MerryClosets.Controllers.Material
         }
 
         [HttpDelete("{reference}/colors")]
-        public IActionResult DeleteColorsFromMaterial([FromRoute] string reference,
+        public async Task<IActionResult> DeleteColorsFromMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<ColorDto> enumerableColorDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             _logger.logInformation(LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput =
                 _materialService.RemoveColorsFromMaterial(reference, enumerableColorDto);
@@ -416,9 +451,13 @@ namespace MerryClosets.Controllers.Material
         }
 
         [HttpDelete("{reference}/finishes")]
-        public IActionResult DeleteFinishesFromMaterial([FromRoute] string reference,
+        public async Task<IActionResult> DeleteFinishesFromMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<FinishDto> enumerableFinishDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             _logger.logInformation(LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput =
                 _materialService.RemoveFinishesFromMaterial(reference, enumerableFinishDto);
@@ -453,9 +492,13 @@ namespace MerryClosets.Controllers.Material
         }
 
         [HttpDelete("{reference}/price-date-items")]
-        public IActionResult DeletePriceHistoryFromMaterial([FromRoute] string reference,
+        public async Task<IActionResult> DeletePriceHistoryFromMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<PriceHistoryDto> enumerablePriceHistoryDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             _logger.logInformation(LoggingEvents.HardDeleteItem, "Deleting Price History By Reference: {0}", reference);
             ValidationOutput validationOutput =
                 _materialService.RemovePriceHistoryFromMaterial(reference, enumerablePriceHistoryDto);
@@ -490,10 +533,14 @@ namespace MerryClosets.Controllers.Material
         }
 
         [HttpDelete("{reference}/finishes/{finishReference}/price-date-items")]
-        public IActionResult DeleteFinishPriceHistoryFromMaterial([FromRoute] string reference,
+        public async Task<IActionResult> DeleteFinishPriceHistoryFromMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromRoute] string finishReference,
             [FromBody] IEnumerable<PriceHistoryDto> enumerablePriceHistoryDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             _logger.logInformation(LoggingEvents.HardDeleteItem,
                 "Deleting Price History Of Finish {0} of Material By Reference: {1}", finishReference, reference);
             ValidationOutput validationOutput =

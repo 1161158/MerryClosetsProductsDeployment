@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using MerryClosets.Models;
 using MerryClosets.Models.Collection;
 using MerryClosets.Models.ConfiguredProduct;
@@ -23,13 +24,15 @@ namespace MerryClosets.Controllers
         private ICollectionService _collectionService;
         private IConfiguredProductService _configuredProductService;
         private readonly CustomLogger _logger;
+        private readonly IUserValidationService _userValidationService;
 
-        public CatalogController(ICatalogService catalogService, ILogger<ICategoryService> logger, IConfiguredProductService configuredProductService, ICollectionService collectionService)
+        public CatalogController(IUserValidationService userValidationService, ICatalogService catalogService, ILogger<ICategoryService> logger, IConfiguredProductService configuredProductService, ICollectionService collectionService)
         {
             _catalogService = catalogService;
             _collectionService = collectionService;
             _configuredProductService = configuredProductService;
             _logger = new CustomLogger(logger);
+            _userValidationService = userValidationService;
         }
 
         // ========= POST METHODS =========
@@ -38,8 +41,12 @@ namespace MerryClosets.Controllers
          * POST method that will create a new Catalog in the system.
          */
         [HttpPost]
-        public IActionResult CreateCatalog([FromBody] CatalogDto catalogDto)
+        public async Task<IActionResult> CreateCatalog([FromHeader(Name="Authorization")] string authorization, [FromBody] CatalogDto catalogDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.PostItem, "Creating By Dto: {0}", catalogDto.Reference);
             ValidationOutput validationOutput = _catalogService.Register(catalogDto);
             if (validationOutput.HasErrors())
@@ -71,9 +78,13 @@ namespace MerryClosets.Controllers
          * POST method that allows the addition of new Configured Products to a Catalog (each Configured Product is associated with a Collection in the form of an object of type ProductCollection)
          */
         [HttpPost("{reference}/various-product-collection")]
-        public IActionResult AddVariousProductCollection([FromRoute] string reference,
+        public async Task<IActionResult> AddVariousProductCollection([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<ProductCollectionDto> enumerableProductCollectionDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerableProductCollectionDto);
@@ -154,8 +165,12 @@ namespace MerryClosets.Controllers
          * PUT method that will update the name and the description of the catalog with the passed reference.
          */
         [HttpPut("{reference}")]
-        public IActionResult UpdateCatalog([FromRoute] string reference, [FromBody] CatalogDto catalogDto)
+        public async Task<IActionResult> UpdateCatalog([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] CatalogDto catalogDto)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.UpdateItem, "Updating By Reference: {0}", reference);
             ValidationOutput validationOutput = _catalogService.Update(reference, catalogDto);
             if (validationOutput.HasErrors())
@@ -189,8 +204,12 @@ namespace MerryClosets.Controllers
          * DELETE method that will delete the catalog with the passed reference.
          */
         [HttpDelete("{reference}")]
-        public IActionResult DeleteCatalog([FromRoute] string reference)
+        public async Task<IActionResult> DeleteCatalog([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
+            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
             _logger.logInformation(LoggingEvents.SoftDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _catalogService.Remove(reference);
             if (validationOutput.HasErrors())
