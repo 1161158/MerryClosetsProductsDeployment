@@ -250,6 +250,37 @@ namespace MerryClosets.Controllers.Product
             }
         }
 
+        [HttpPost("{reference}/part-restriction")]
+        public IActionResult AddRestriction([FromRoute] string reference, [FromBody] PartDto partRestriction){
+            object[] array = new object[2];
+            array[0] = reference;
+            array[1] = partRestriction.ToString();
+            _logger.logInformation(LoggingEvents.PostItem, "Adding Restriction By Reference: {0} -- {1}", array);
+            ValidationOutput validationOutput = _productService.AddPartRestriction(reference, partRestriction);
+            if (validationOutput.HasErrors())
+            {
+                if (validationOutput is ValidationOutputBadRequest)
+                {
+                    _logger.logCritical(LoggingEvents.PostBadRequest, "Adding Restriction Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    return BadRequest(validationOutput.FoundErrors);
+                }
+
+                if (validationOutput is ValidationOutputNotFound)
+                {
+                    _logger.logCritical(LoggingEvents.PostNotFound, "Adding Restriction Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    return NotFound(validationOutput.FoundErrors);
+                }
+
+                _logger.logCritical(LoggingEvents.PostInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+            }
+            else
+            {
+                _logger.logInformation(LoggingEvents.PostOk, "Adding Restriction to Product Succeeded: {0}", "");
+                return Ok(validationOutput.DesiredReturn);            
+            }
+        }
+
         // ========= GET METHODS =========
 
         /**

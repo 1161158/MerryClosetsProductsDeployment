@@ -21,5 +21,6 @@ namespace MerryClosets.Services.Interfaces
         ValidationOutput AddVariousDimensionValues(string refer, IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto);
         ValidationOutput DeleteVariousDimensionValues(string refer, IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto);
         ValidationOutput AddRestriction(string refer, AlgorithmDto dto);
+        ValidationOutput AddPartRestriction(string refer, PartDto dto);
     }
 }

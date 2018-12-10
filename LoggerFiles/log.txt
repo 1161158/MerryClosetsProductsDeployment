@@ -19526,3 +19526,28 @@ USERREF: 1    [07 December 2018 08:01:44 INFORMATION]:     EVENTID: 1003    MESS
 USERREF: 1    [07 December 2018 08:01:45 INFORMATION]:     EVENTID: 2003    MESSAGE: Creating Category Succeeded: 1
 USERREF: 1    [07 December 2018 13:00:46 INFORMATION]:     EVENTID: 1003    MESSAGE: Creating By Dto: 1
 USERREF: 1    [07 December 2018 13:00:48 INFORMATION]:     EVENTID: 2003    MESSAGE: Creating Category Succeeded: 1
+USERREF:     [07 December 2018 13:46:38 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 13:46:55 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Materials: 
+USERREF:     [07 December 2018 13:46:58 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 13:50:03 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 13:50:11 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 13:57:37 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 13:57:48 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:01:26 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:01:45 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:02:16 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:02:25 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:03:14 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:03:20 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:05:14 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:05:20 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:05:35 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:05:46 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:05:52 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF:     [07 December 2018 14:05:57 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: 
+USERREF: 1    [07 December 2018 14:06:30 INFORMATION]:     EVENTID: 1003    MESSAGE: Creating By Dto: asd
+USERREF: 1    [07 December 2018 14:06:31 INFORMATION]:     EVENTID: 2003    MESSAGE: Creating Category Succeeded: asd
+USERREF:     [07 December 2018 14:06:51 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: asd
+USERREF:     [07 December 2018 14:06:56 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: asd
+USERREF:     [07 December 2018 14:07:03 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: asd
+USERREF:     [07 December 2018 14:07:12 INFORMATION]:     EVENTID: 2002    MESSAGE: Getting All Categories: asd

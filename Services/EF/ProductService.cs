@@ -175,11 +175,11 @@ namespace MerryClosets.Services.EF
         {
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
             //1.
-//            if (dto.Parts.Count == 0)
-//            {
-//                validationOutput.AddError("Products", "No products (or respective algorithms) were selected!");
-//                return validationOutput;
-//            }
+            //            if (dto.Parts.Count == 0)
+            //            {
+            //                validationOutput.AddError("Products", "No products (or respective algorithms) were selected!");
+            //                return validationOutput;
+            //            }
 
             if (dto.Parts.Count > 0)
             {
@@ -394,7 +394,7 @@ namespace MerryClosets.Services.EF
             return validationOutput;
         }
 
-        
+
         // ============ Methods to GET something ============
 
         /**
@@ -440,7 +440,7 @@ namespace MerryClosets.Services.EF
             return productDtoList;
         }
 
-        
+
         // ============ Methods to UPDATE something ============
 
         /**
@@ -487,7 +487,7 @@ namespace MerryClosets.Services.EF
             return validationOutput;
         }
 
-        
+
         // ============ Methods to REMOVE something ============
 
         /**
@@ -513,7 +513,7 @@ namespace MerryClosets.Services.EF
             return validationOutput;
         }
 
-        
+
         // ============ Business Methods ============
 
         /**
@@ -1211,19 +1211,19 @@ namespace MerryClosets.Services.EF
 
             if (dto is MaterialFinishPartAlgorithmDto)
             {
-                MaterialFinishPartAlgorithmDto algorithm = (MaterialFinishPartAlgorithmDto) dto;
+                MaterialFinishPartAlgorithmDto algorithm = (MaterialFinishPartAlgorithmDto)dto;
                 validationOutput.DesiredReturn = _mapper.Map<MaterialFinishPartAlgorithm>(algorithm);
             }
 
             if (dto is RatioAlgorithmDto)
             {
-                RatioAlgorithmDto algorithm = (RatioAlgorithmDto) dto;
+                RatioAlgorithmDto algorithm = (RatioAlgorithmDto)dto;
                 validationOutput.DesiredReturn = _mapper.Map<RatioAlgorithm>(algorithm);
             }
 
             if (dto is SizePercentagePartAlgorithmDto)
             {
-                SizePercentagePartAlgorithmDto algorithm = (SizePercentagePartAlgorithmDto) dto;
+                SizePercentagePartAlgorithmDto algorithm = (SizePercentagePartAlgorithmDto)dto;
                 validationOutput.DesiredReturn = _mapper.Map<SizePercentagePartAlgorithm>(algorithm);
             }
 
@@ -1247,7 +1247,7 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
-            Algorithm toAdd = (Algorithm) validationOutput.DesiredReturn;
+            Algorithm toAdd = (Algorithm)validationOutput.DesiredReturn;
             if (toAdd is PartAlgorithm)
             {
                 validationOutput = getParentProducts(refer);
@@ -1257,10 +1257,10 @@ namespace MerryClosets.Services.EF
                 }
 
                 List<ProductDto> output = new List<ProductDto>();
-                Dictionary<Product, Part> info = (Dictionary<Product, Part>) validationOutput.DesiredReturn;
+                Dictionary<Product, Part> info = (Dictionary<Product, Part>)validationOutput.DesiredReturn;
                 foreach (var product in info.Keys)
                 {
-                    if (!info[product].AddPartAlgorithm((PartAlgorithm) toAdd))
+                    if (!info[product].AddPartAlgorithm((PartAlgorithm)toAdd))
                     {
                         validationOutput.AddError("Part Algorithm", "Part Algorithm already exists");
                         return validationOutput;
@@ -1277,7 +1277,7 @@ namespace MerryClosets.Services.EF
             {
                 foreach (var dimension in desiredProduct.Dimensions)
                 {
-                    if (!dimension.AddDimensionAlgorithm((DimensionAlgorithm) toAdd))
+                    if (!dimension.AddDimensionAlgorithm((DimensionAlgorithm)toAdd))
                     {
                         validationOutput.AddError("Dimension Algorithm", "Dimension Algorithm already exists");
                         return validationOutput;
@@ -1285,8 +1285,85 @@ namespace MerryClosets.Services.EF
                 }
 
                 _productRepository.Update(desiredProduct);
-                validationOutput.DesiredReturn = new List<ProductDto> {_mapper.Map<ProductDto>(desiredProduct)};
+                validationOutput.DesiredReturn = new List<ProductDto> { _mapper.Map<ProductDto>(desiredProduct) };
             }
+
+            return validationOutput;
+        }
+
+        public ValidationOutput AddPartRestriction(string refer, PartDto dto)
+        {
+            ValidationOutput validationOutput = new ValidationOutputBadRequest();
+            Product desiredProduct = _productRepository.GetByReference(refer);
+            if (desiredProduct == null)
+            {
+                validationOutput = new ValidationOutputNotFound();
+                validationOutput.AddError("Product's reference", "There are no products with the given reference");
+                return validationOutput;
+            }
+
+            Product productPart = _productRepository.GetByReference(dto.ProductReference);
+            if (productPart == null)
+            {
+                validationOutput = new ValidationOutputNotFound();
+                validationOutput.AddError("Product's reference", "There are no products with the given reference (part reference)");
+                return validationOutput;
+            }
+
+            Part returnPart = new Part(dto.ProductReference);
+
+            if (dto.Algorithms == null)
+            {
+                desiredProduct.AddPart(returnPart);
+                _productRepository.Update(desiredProduct);
+                validationOutput.DesiredReturn = new List<ProductDto> { _mapper.Map<ProductDto>(desiredProduct) };
+
+                return validationOutput;
+            }
+            List<PartAlgorithmDto> algorithmToAdd = dto.Algorithms;
+
+            //produto não tem parte, então adiciona partes e algoritmos ao produto
+            if (!desiredProduct.Parts.Contains(_mapper.Map<Part>(returnPart)))
+            {
+                foreach (var algorithmDto in algorithmToAdd)
+                {
+                    PartAlgorithm algorithm = _mapper.Map<PartAlgorithm>(algorithmDto);
+                    validationOutput = _algorithmDTOValidator.DTOIsValid(algorithmDto);
+                    if (validationOutput.HasErrors())
+                    {
+                        return validationOutput;
+                    }
+
+                    if (!returnPart.AddPartAlgorithm(algorithm))
+                    {
+                        validationOutput.AddError("Part Algorithm", "Part Algorithm already exists");
+                        return validationOutput;
+                    }
+                }
+                desiredProduct.AddPart(returnPart);
+            }
+            else //produto já tem parte, apenas adiciona os novos algoritmos ao produto
+            {
+                foreach (var algorithmDto in algorithmToAdd)
+                {
+                    PartAlgorithm algorithm = _mapper.Map<PartAlgorithm>(algorithmDto);
+                    validationOutput = _algorithmDTOValidator.DTOIsValid(algorithmDto);
+                    if (validationOutput.HasErrors())
+                    {
+                        return validationOutput;
+                    }
+
+                    //alterar o parte do produto
+                    if (!desiredProduct.getProductPart(returnPart.ProductReference).AddPartAlgorithm(algorithm))
+                    {
+                        validationOutput.AddError("Part Algorithm", "Part Algorithm already exists");
+                        return validationOutput;
+                    }
+                }
+            }
+
+            _productRepository.Update(desiredProduct);
+            validationOutput.DesiredReturn = new List<ProductDto> { _mapper.Map<ProductDto>(desiredProduct) };
 
             return validationOutput;
         }

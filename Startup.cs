@@ -9,7 +9,6 @@ using MerryClosets.Models.DTO;
 using MerryClosets.Models.Product;
 using Newtonsoft.Json;
 using MerryClosets.Models.Restriction;
-using Microsoft.AspNetCore.Cors;
 
 namespace MerryClosets
 {
@@ -32,6 +31,7 @@ namespace MerryClosets
                 .RegisterSubtype(typeof(DiscreteValue), Values.ValuesType.DiscreteValue)
                 .RegisterSubtype(typeof(ContinuousValue), Values.ValuesType.ContinuousValue)
                 .SerializeDiscriminatorProperty().Build());
+            
             settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(AlgorithmDto), "$type")
                 .RegisterSubtype(typeof(MaterialFinishPartAlgorithmDto), AlgorithmDto.RestrictionDtoType.MaterialFinishPartAlgorithmDto)
                 .RegisterSubtype(typeof(RatioAlgorithmDto), AlgorithmDto.RestrictionDtoType.RatioAlgorithmDto)
@@ -42,6 +42,28 @@ namespace MerryClosets
                 .RegisterSubtype(typeof(RatioAlgorithm), Algorithm.RestrictionType.RatioAlgorithm)
                 .RegisterSubtype(typeof(SizePercentagePartAlgorithm), Algorithm.RestrictionType.SizePercentagePartAlgorithm)
                 .SerializeDiscriminatorProperty().Build());
+            
+            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(DimensionAlgorithmDto), "$type")
+                .RegisterSubtype(typeof(RatioAlgorithmDto), DimensionAlgorithmDto.RestrictionDtoType.RatioAlgorithmDto)
+                .SerializeDiscriminatorProperty().Build());
+            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(DimensionAlgorithm), "$type")
+                .RegisterSubtype(typeof(RatioAlgorithm), DimensionAlgorithm.RestrictionType.RatioAlgorithm)
+                .SerializeDiscriminatorProperty().Build());
+            
+            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(PartAlgorithmDto), "$type")
+                .RegisterSubtype(typeof(SizePercentagePartAlgorithmDto), PartAlgorithmDto.RestrictionDtoType.SizePercentagePartAlgorithmDto)
+                .SerializeDiscriminatorProperty().Build());
+            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(PartAlgorithm), "$type")
+                .RegisterSubtype(typeof(SizePercentagePartAlgorithm), PartAlgorithm.RestrictionType.SizePercentagePartAlgorithm)
+                .SerializeDiscriminatorProperty().Build());
+            
+            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(PartAlgorithmDto), "$type")
+                .RegisterSubtype(typeof(MaterialFinishPartAlgorithmDto), PartAlgorithmDto.RestrictionDtoType.MaterialFinishPartAlgorithmDto)
+                .SerializeDiscriminatorProperty().Build());
+            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(PartAlgorithm), "$type")
+                .RegisterSubtype(typeof(MaterialFinishPartAlgorithm), PartAlgorithm.RestrictionType.MaterialFinishPartAlgorithm)
+                .SerializeDiscriminatorProperty().Build());
+            
             Configuration = builder.Build();
         }
 
@@ -52,12 +74,11 @@ namespace MerryClosets
 
             services.AddAutoMapper();
 
-            services.AddCors();
-
             int chosenDB = Configuration.GetValue("ChosenDB", 0);
             DataConfiguration.configure((DataProviderEnum)chosenDB, Configuration, services);
             ServiceConfiguration.configure(Configuration, services);
 
+            services.AddCors();
             services.AddMvc();
         }
 
@@ -73,8 +94,8 @@ namespace MerryClosets
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-            app.UseCors(builder => builder.WithOrigins("http://localhost:8000").AllowAnyHeader().AllowAnyMethod());
+            app.UseCors(builder => builder.WithOrigins("*").AllowAnyHeader().AllowAnyMethod());
+            app.UseCors(builder => builder.WithOrigins("*").AllowAnyHeader().AllowAnyMethod());
             app.UseMvc();
         }
     }
