@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using MerryClosets.Models.Animation;
 using MerryClosets.Models.Category;
 using MerryClosets.Models.DTO;
 using MerryClosets.Models.DTO.DTOValidators;
@@ -11,6 +12,7 @@ using MerryClosets.Models.Product;
 using MerryClosets.Models.Restriction;
 using MerryClosets.Repositories.Interfaces;
 using MerryClosets.Services.Interfaces;
+using MerryClosets.Utils;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 
@@ -29,12 +31,13 @@ namespace MerryClosets.Services.EF
         private readonly CategoryDTOValidator _categoryDTOValidator;
         private readonly MaterialDTOValidator _materialDTOValidator;
         private readonly AlgorithmDTOValidator _algorithmDTOValidator;
+        private readonly ModelGroupDTOValidator _modelGroupDTOValidator;
 
         public ProductService(IMapper mapper, IProductRepository productRepository,
             ICategoryRepository categoryRepository, IMaterialRepository materialRepository,
             ProductDTOValidator productDTOValidator, CategoryDTOValidator categoryDTOValidator,
             MaterialDTOValidator materialDTOValidator, AlgorithmDTOValidator algorithmDTOValidator,
-            DimensionValuesDTOValidator dimensionValuesDTOValidator)
+            DimensionValuesDTOValidator dimensionValuesDTOValidator, ModelGroupDTOValidator modelGroupDTOValidator)
         {
             _mapper = mapper;
             _productRepository = productRepository;
@@ -45,6 +48,7 @@ namespace MerryClosets.Services.EF
             _materialDTOValidator = materialDTOValidator;
             _algorithmDTOValidator = algorithmDTOValidator;
             _dimensionValuesDTOValidator = dimensionValuesDTOValidator;
+            _modelGroupDTOValidator = modelGroupDTOValidator;
         }
 
         /**
@@ -72,6 +76,17 @@ namespace MerryClosets.Services.EF
         {
             var material = _materialRepository.GetByReference(reference);
             return material != null;
+        }
+
+        private bool ExistsAndIsActive(string reference)
+        {
+            var product = _productRepository.GetByReference(reference);
+            if (product != null && product.IsActive)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         /**
@@ -421,6 +436,29 @@ namespace MerryClosets.Services.EF
         }
 
         /**
+         * Method that will return either the product in the form of a DTO that has the passed reference OR all the errors found when trying to do so.
+         * 
+         * Validations performed:
+         * 1. Validation of the passed product's reference (database);
+         * 
+         * This method can return a soft-deleted product.
+         */
+        public ValidationOutput ClientGetByReference(string reference)
+        {
+            //1.
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!ExistsAndIsActive(reference))
+            {
+                validationOutput.AddError("Reference of product",
+                    "No product with the reference '" + reference + "' exists in the system.");
+                return validationOutput;
+            }
+
+            validationOutput.DesiredReturn = _mapper.Map<ProductDto>(_productRepository.GetByReference(reference));
+            return validationOutput;
+        }
+
+        /**
          * Method that will return all products present in the system, each in the form of a DTO OR all the errors found when trying to do so.
          *
          * May return an empty list, indicating that there are no products in the system (yet).
@@ -461,6 +499,13 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
+            validationOutput = new ValidationOutputForbidden();
+            if (dto.Reference != null)
+            {
+                validationOutput.AddError("Reference of product", "It's not allowed to update reference.");
+                return validationOutput;
+            }
+
             //2.
             validationOutput = _productDTOValidator.DTOIsValidForUpdate(dto);
             if (validationOutput.HasErrors())
@@ -477,11 +522,35 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
-            productToUpdate.Name = dto.Name;
-            productToUpdate.Description = dto.Description;
-            productToUpdate.Price = _mapper.Map<Price>(dto.Price);
-            productToUpdate.SlotDefinition = _mapper.Map<SlotDefinition>(dto.SlotDefinition);
-            productToUpdate.CategoryReference = dto.CategoryReference;
+            if (dto.Name != null)
+            {
+                productToUpdate.Name = dto.Name;
+            }
+
+            if (dto.Description != null)
+            {
+                productToUpdate.Description = dto.Description;
+            }
+
+            if (dto.Price != null)
+            {
+                productToUpdate.Price = _mapper.Map<Price>(dto.Price);
+            }
+
+            if (dto.SlotDefinition != null)
+            {
+                productToUpdate.SlotDefinition = _mapper.Map<SlotDefinition>(dto.SlotDefinition);
+            }
+
+            if (dto.CategoryReference != null)
+            {
+                productToUpdate.CategoryReference = dto.CategoryReference;
+            }
+
+            if (dto.ModelGroup != null)
+            {
+                productToUpdate.ModelGroup = _mapper.Map<ModelGroup>(dto.ModelGroup);
+            }
 
             validationOutput.DesiredReturn = _mapper.Map<ProductDto>(_productRepository.Update(productToUpdate));
             return validationOutput;
@@ -680,7 +749,7 @@ namespace MerryClosets.Services.EF
                 if (!productToModify.IsAssociatedWithMaterial(material.Reference))
                 {
                     validationOutput.AddError("Reference of material",
-                        "Material '" + material.Reference + "' is already associated with product '" + reference +
+                        "Material '" + material.Reference + "' is not associated with product '" + reference +
                         "'.");
                     return validationOutput;
                 }
@@ -1316,7 +1385,7 @@ namespace MerryClosets.Services.EF
             {
                 desiredProduct.AddPart(returnPart);
                 _productRepository.Update(desiredProduct);
-                validationOutput.DesiredReturn = new List<ProductDto> { _mapper.Map<ProductDto>(desiredProduct) };
+                validationOutput.DesiredReturn = (ProductDto)_mapper.Map<ProductDto>(desiredProduct);
 
                 return validationOutput;
             }
@@ -1363,8 +1432,33 @@ namespace MerryClosets.Services.EF
             }
 
             _productRepository.Update(desiredProduct);
-            validationOutput.DesiredReturn = new List<ProductDto> { _mapper.Map<ProductDto>(desiredProduct) };
+            validationOutput.DesiredReturn = (ProductDto)_mapper.Map<ProductDto>(desiredProduct);
 
+            return validationOutput;
+        }
+
+        public ValidationOutput UpdateModelGroup(string refer, ModelGroupDto dto)
+        {
+            ValidationOutput validationOutput = new ValidationOutputBadRequest();
+            if (dto == null)
+            {
+                validationOutput.AddError("DTO", "Model Group is missing!");
+                return validationOutput;
+            }
+            Product desiredProduct = _productRepository.GetByReference(refer);
+            if (desiredProduct == null)
+            {
+                validationOutput = new ValidationOutputNotFound();
+                validationOutput.AddError("Product's reference", "There are no products with the given reference");
+                return validationOutput;
+            }
+            validationOutput = _modelGroupDTOValidator.DTOIsValid(dto);
+            if (validationOutput.HasErrors())
+            {
+                return validationOutput;
+            }
+            desiredProduct.ModelGroup = _mapper.Map<ModelGroup>(dto);
+            validationOutput.DesiredReturn = _mapper.Map<ProductDto>(_productRepository.Update(desiredProduct));
             return validationOutput;
         }
     }

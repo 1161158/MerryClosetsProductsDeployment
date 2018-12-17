@@ -6,6 +6,7 @@ using MerryClosets.Models.DTO;
 using MerryClosets.Models.DTO.DTOValidators;
 using MerryClosets.Repositories.Interfaces;
 using MerryClosets.Services.Interfaces;
+using MerryClosets.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace MerryClosets.Services.EF
@@ -40,6 +41,17 @@ namespace MerryClosets.Services.EF
         {
             var category = _catalogRepository.GetByReference(reference);
             return category != null;
+        }
+
+        private bool ExistsAndIsActive(string reference)
+        {
+            var catalog = _catalogRepository.GetByReference(reference);
+            if (catalog != null && catalog.IsActive)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         /**
@@ -202,6 +214,28 @@ namespace MerryClosets.Services.EF
         }
 
         /**
+         * Method that will return either the catalog in the form of a DTO that has the passed reference OR all the errors found when trying to do so.
+         * 
+         * Validations performed:
+         * 1. Validation of the passed catalog's reference (database);
+         * 
+         * This method can return a soft-deleted catalog.
+         */
+        public ValidationOutput ClientGetByReference(string reference)
+        {
+            //1.
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!ExistsAndIsActive(reference))
+            {
+                validationOutput.AddError("Reference of catalog", "No catalog with the reference '" + reference + "' exists in the system.");
+                return validationOutput;
+            }
+
+            validationOutput.DesiredReturn = _mapper.Map<CatalogDto>(_catalogRepository.GetByReference(reference));
+            return validationOutput;
+        }
+
+        /**
          * Method that will return all catalogs present in the system, each in the form of a DTO OR all the errors found when trying to do so.
          *
          * May return an empty list, indicating that there are no catalogs in the system (yet).
@@ -240,6 +274,13 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
+            validationOutput = new ValidationOutputForbidden();
+            if (dto.Reference != null)
+            {
+                validationOutput.AddError("Reference of catalog", "It's not allowed to update reference.");
+                return validationOutput;
+            }
+            
             //2.
             validationOutput = _catalogDTOValidator.DTOIsValidForUpdate(dto);
             if (validationOutput.HasErrors())
@@ -249,8 +290,15 @@ namespace MerryClosets.Services.EF
 
             Catalog catalogToUpdate = _catalogRepository.GetByReference(refer);
 
-            catalogToUpdate.Name = dto.Name;
-            catalogToUpdate.Description = dto.Description;
+            if (dto.Name != null)
+            {
+                catalogToUpdate.Name = dto.Name;
+            }
+
+            if (dto.Description != null)
+            {
+                catalogToUpdate.Description = dto.Description;
+            }
 
             validationOutput.DesiredReturn = _mapper.Map<CatalogDto>(_catalogRepository.Update(catalogToUpdate));
             return validationOutput;
@@ -281,6 +329,28 @@ namespace MerryClosets.Services.EF
         }
 
         // ============ Business Methods ============
+
+        public ValidationOutput GetAllProductCollection(string reference)
+        {
+            //1.
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!CatalogExists(reference))
+            {
+                validationOutput.AddError("Reference of catalog", "No catalog with the reference '" + reference + "' exists in the system.");
+                return validationOutput;
+            }
+            var catalog = _catalogRepository.GetByReference(reference);
+
+            List<ProductCollectionDto> returnList = new List<ProductCollectionDto>();
+
+            foreach (var catalogProductCollection in catalog.CatalogProductCollectionList)
+            {
+                var productCollection = catalogProductCollection.ProductCollection;
+                returnList.Add(_mapper.Map<ProductCollectionDto>(productCollection));
+            }
+            validationOutput.DesiredReturn = returnList;
+            return validationOutput;
+        }
 
         /**
          * Method that will add new configured products, that belong to a certain, existing collection, (in the form of ProductCollection objects) to the catalog with the passed reference.

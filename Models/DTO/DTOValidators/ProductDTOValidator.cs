@@ -8,13 +8,15 @@ namespace MerryClosets.Models.DTO.DTOValidators
         private readonly SlotDefinitionDTOValidator _slotDefinitionDTOValidator;
         private readonly PriceDTOValidator _priceDTOValidator;
         private readonly DimensionValuesDTOValidator _dimensionValuesDTOValidator;
+        private readonly ModelGroupDTOValidator _modelGroupDTOValidator;
 
         public ProductDTOValidator(SlotDefinitionDTOValidator slotDefinitionDTOValidator,
-            PriceDTOValidator priceDTOValidator, DimensionValuesDTOValidator dimensionValuesDTOValidator)
+            PriceDTOValidator priceDTOValidator, DimensionValuesDTOValidator dimensionValuesDTOValidator, ModelGroupDTOValidator modelGroupDTOValidator)
         {
             _priceDTOValidator = priceDTOValidator;
             _slotDefinitionDTOValidator = slotDefinitionDTOValidator;
             _dimensionValuesDTOValidator = dimensionValuesDTOValidator;
+            _modelGroupDTOValidator = modelGroupDTOValidator;
         }
 
         private bool NameIsValid(string name)
@@ -58,36 +60,68 @@ namespace MerryClosets.Models.DTO.DTOValidators
                     validationOutput.Join(slotDefinitionDTOValidationOutput);
                 }
             }
+
+            var modelGroup = consideredDto.ModelGroup;
+            if (modelGroup != null)
+            {
+                ValidationOutput modelGroupValidationOutput = _modelGroupDTOValidator.DTOIsValid(modelGroup);
+                if (validationOutput.HasErrors())
+                {
+                    validationOutput.Join(modelGroupValidationOutput);
+                }
+            }
             return validationOutput;
         }
 
         public override ValidationOutput DTOIsValidForUpdate(ProductDto consideredDto)
         {
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
-            if (!NameIsValid(consideredDto.Name))
+            if (consideredDto.Name != null)
             {
-                validationOutput.AddError("Name of product", "New name '" + consideredDto.Name + "' is not valid!");
+                if (!NameIsValid(consideredDto.Name))
+                {
+                    validationOutput.AddError("Name of product", "New name '" + consideredDto.Name + "' is not valid!");
+                }
             }
 
-            if (!DescriptionIsValid(consideredDto.Description))
+            if (consideredDto.Description != null)
             {
-                validationOutput.AddError("Description of product",
-                    "New description '" + consideredDto.Description + "' is not valid!");
+                if (!DescriptionIsValid(consideredDto.Description))
+                {
+                    validationOutput.AddError("Description of product",
+                        "New description '" + consideredDto.Description + "' is not valid!");
+                }
             }
 
-            ValidationOutput priceDTOValidationOutput = _priceDTOValidator.DTOIsValid(consideredDto.Price);
-            if (priceDTOValidationOutput.HasErrors())
+            if (consideredDto.Price != null)
             {
-                priceDTOValidationOutput.AppendToAllkeys("Product '" + consideredDto.Reference + "' > ");
-                validationOutput.Join(priceDTOValidationOutput);
+                ValidationOutput priceDTOValidationOutput = _priceDTOValidator.DTOIsValid(consideredDto.Price);
+                if (priceDTOValidationOutput.HasErrors())
+                {
+                    priceDTOValidationOutput.AppendToAllkeys("Product '" + consideredDto.Reference + "' > ");
+                    validationOutput.Join(priceDTOValidationOutput);
+                }
             }
 
-            ValidationOutput slotDefinitionDTOValidationOutput =
-                _slotDefinitionDTOValidator.DTOIsValid(consideredDto.SlotDefinition);
-            if (slotDefinitionDTOValidationOutput.HasErrors())
+            if (consideredDto.SlotDefinition != null)
             {
-                slotDefinitionDTOValidationOutput.AppendToAllkeys("Product '" + consideredDto.Reference + "' > ");
-                validationOutput.Join(slotDefinitionDTOValidationOutput);
+                ValidationOutput slotDefinitionDTOValidationOutput =
+                    _slotDefinitionDTOValidator.DTOIsValid(consideredDto.SlotDefinition);
+                if (slotDefinitionDTOValidationOutput.HasErrors())
+                {
+                    slotDefinitionDTOValidationOutput.AppendToAllkeys("Product '" + consideredDto.Reference + "' > ");
+                    validationOutput.Join(slotDefinitionDTOValidationOutput);
+                }
+            }
+
+            var modelGroup = consideredDto.ModelGroup;
+            if (modelGroup != null)
+            {
+                ValidationOutput modelGroupValidationOutput = _modelGroupDTOValidator.DTOIsValid(modelGroup);
+                if (validationOutput.HasErrors())
+                {
+                    validationOutput.Join(modelGroupValidationOutput);
+                }
             }
 
             return validationOutput;

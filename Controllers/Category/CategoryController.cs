@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 
 namespace MerryClosets.Controllers.Category
 {
@@ -38,7 +39,10 @@ namespace MerryClosets.Controllers.Category
         [HttpPost]
         public async Task<IActionResult> CreateCategory([FromHeader(Name="Authorization")] string authorization, [FromBody] CategoryDto categoryDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
 
@@ -80,11 +84,14 @@ namespace MerryClosets.Controllers.Category
         [HttpGet]
         public async Task<IActionResult> GetAllCategories([FromHeader(Name="Authorization")] string authorization)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
             }
+            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             IEnumerable<CategoryDto> list = _categoryService.GetAll();
             _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Categories: {0}", EnumerableUtils.convert(list));
@@ -97,36 +104,48 @@ namespace MerryClosets.Controllers.Category
         [HttpGet("{reference}", Name = "GetCategory")]
         public async Task<IActionResult> GetCategory([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
             }
             
-            _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
-            ValidationOutput validationOutput = _categoryService.GetByReference(reference);
-            if (validationOutput.HasErrors())
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            ValidationOutput validationOutput;
+            
+            if(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])) {
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _categoryService.GetByReference(reference);
+            }
+            else if(await _userValidationService.Validate(authorization.Split(" ")[1]))
             {
-                if (validationOutput is ValidationOutputBadRequest)
-                {
-                    _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Category Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
-                    return BadRequest(validationOutput.FoundErrors);
-                }
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _categoryService.ClientGetByReference(reference);
+            }else
+            {
+                return Unauthorized();
+            }
+            
+           if (validationOutput.HasErrors())
+           {
+               if (validationOutput is ValidationOutputBadRequest)
+               {
+                   _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Category Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                   return BadRequest(validationOutput.FoundErrors);
+               }
 
-                if (validationOutput is ValidationOutputNotFound)
-                {
-                    _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Category Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
-                    return NotFound(validationOutput.FoundErrors);
-                }
+               if (validationOutput is ValidationOutputNotFound)
+               {
+                   _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Category Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                   return NotFound(validationOutput.FoundErrors);
+               }
                 
-                _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
-                return BadRequest("Type of validation output not recognized. Please contact your software provider.");
-            }
-            else
-            {
-                _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Category: {0}", ((CategoryDto) validationOutput.DesiredReturn).ToString());
-                return Ok((CategoryDto)validationOutput.DesiredReturn);
-            }
+               _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
+               return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+           }
+           else
+           {
+               _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Category: {0}", ((CategoryDto) validationOutput.DesiredReturn).ToString());
+               return Ok((CategoryDto)validationOutput.DesiredReturn);
+           }
         }
 
         /**
@@ -135,11 +154,14 @@ namespace MerryClosets.Controllers.Category
         [HttpGet("{reference}/direct-child-categories", Name = "GetDirectChildCategories")]
         public async Task<IActionResult> GetDirectChildCategories([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
             }
+            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             _logger.logInformation(userRef, LoggingEvents.GetAllItems, "Getting Children By Reference: {0}", reference);
             ValidationOutput validationOutput = _categoryService.ObtainDirectChildCategories(reference);
@@ -173,11 +195,14 @@ namespace MerryClosets.Controllers.Category
         [HttpGet("{reference}/products")]
         public async Task<IActionResult> GetProductsOfCategory([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
             }
+            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             _logger.logInformation(userRef, LoggingEvents.GetAllItems, "Getting Products By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.GetProductsOfCategory(reference);
@@ -213,7 +238,10 @@ namespace MerryClosets.Controllers.Category
         [HttpPut("{reference}")]
         public async Task<IActionResult> UpdateCategory([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] CategoryDto categoryDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             
@@ -233,6 +261,11 @@ namespace MerryClosets.Controllers.Category
                 {
                     _logger.logCritical(userRef, LoggingEvents.UpdateNotFound, "Updating Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
+                }
+                if (validationOutput is ValidationOutputForbidden)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.UpdateForbidden, "Updating Failed: {0}", ((ValidationOutputForbidden)validationOutput).ToString());
+                    return new ForbiddenObjectResult(validationOutput.FoundErrors);
                 }
 
                 _logger.logCritical(userRef, LoggingEvents.UpdateInternalError, "Type of validation output not recognized. Please contact your software provider.");
@@ -254,7 +287,10 @@ namespace MerryClosets.Controllers.Category
         [HttpDelete("{reference}")]
         public async Task<IActionResult> DeleteCategory([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             

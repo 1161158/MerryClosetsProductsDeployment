@@ -41,14 +41,19 @@ namespace MerryClosets.Controllers
          * POST method that will create a new Catalog in the system.
          */
         [HttpPost]
-        public async Task<IActionResult> CreateCatalog([FromHeader(Name="Authorization")] string authorization, [FromBody] CatalogDto catalogDto)
+        public async Task<IActionResult> CreateCatalog([FromHeader(Name = "Authorization")] string authorization, [FromBody] CatalogDto catalogDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
                 return Unauthorized();
             }
-            
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             _logger.logInformation(userRef, LoggingEvents.PostItem, "Creating By Dto: {0}", catalogDto.Reference);
             ValidationOutput validationOutput = _catalogService.Register(catalogDto);
             if (validationOutput.HasErrors())
@@ -71,7 +76,7 @@ namespace MerryClosets.Controllers
             else
             {
                 CatalogDto newCatalogDto = (CatalogDto)validationOutput.DesiredReturn;
-                _logger.logInformation(userRef, LoggingEvents.PostOk, "Creating Catalog Succeeded: {0}",newCatalogDto.ToString());
+                _logger.logInformation(userRef, LoggingEvents.PostOk, "Creating Catalog Succeeded: {0}", newCatalogDto.ToString());
                 return CreatedAtRoute("GetCatalog", new { reference = newCatalogDto.Reference }, newCatalogDto);
             }
         }
@@ -80,15 +85,20 @@ namespace MerryClosets.Controllers
          * POST method that allows the addition of new Configured Products to a Catalog (each Configured Product is associated with a Collection in the form of an object of type ProductCollection)
          */
         [HttpPost("{reference}/various-product-collection")]
-        public async Task<IActionResult> AddVariousProductCollection([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
+        public async Task<IActionResult> AddVariousProductCollection([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<ProductCollectionDto> enumerableProductCollectionDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
                 return Unauthorized();
             }
-            
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerableProductCollectionDto);
@@ -124,14 +134,19 @@ namespace MerryClosets.Controllers
          * GET method that will return all existent catalogs in the system.
          */
         [HttpGet]
-        public async Task<IActionResult> GetAllCatalog([FromHeader(Name="Authorization")] string authorization)
+        public async Task<IActionResult> GetAllCatalog([FromHeader(Name = "Authorization")] string authorization)
         {
-            var userRef = "";
-            if (authorization != null)
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
             {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+                return Unauthorized();
             }
-            
+            if (!(await _userValidationService.Validate(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
             IEnumerable<CatalogDto> list = _catalogService.GetAll();
             _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Catalogs: {0}", EnumerableUtils.convert(list));
             return Ok(list);
@@ -141,16 +156,30 @@ namespace MerryClosets.Controllers
          * GET method that will return the catalog with the given reference.
          */
         [HttpGet("{reference}", Name = "GetCatalog")]
-        public async Task<IActionResult> GetCatalog([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
+        public async Task<IActionResult> GetCatalog([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
             {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+                return Unauthorized();
             }
-            
-            _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
-            ValidationOutput validationOutput = _catalogService.GetByReference(reference);
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            ValidationOutput validationOutput;
+
+            if (await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))
+            {
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _catalogService.GetByReference(reference);
+            }
+            else if (await _userValidationService.Validate(authorization.Split(" ")[1]))
+            {
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _catalogService.ClientGetByReference(reference);
+            }
+            else
+            {
+                return Unauthorized();
+            }
+
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
@@ -170,8 +199,53 @@ namespace MerryClosets.Controllers
             }
             else
             {
-                _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Catalog: {0}", ((CatalogDto) validationOutput.DesiredReturn).ToString());
+                _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Catalog: {0}", ((CatalogDto)validationOutput.DesiredReturn).ToString());
                 return Ok((CatalogDto)validationOutput.DesiredReturn);
+            }
+        }
+
+        /**
+         * GET method that will return the productsCollection of the catalog with the given reference.
+         */
+        [HttpGet("{reference}/various-product-collection")]
+        public async Task<IActionResult> GetProductCollection([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference)
+        {
+              if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.Validate(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
+             _logger.logInformation(userRef, LoggingEvents.SoftDeleteItem, "Getting ProductsCollection By Reference: {0}", reference);
+            
+            ValidationOutput validationOutput = _catalogService.GetAllProductCollection(reference);
+            if (validationOutput.HasErrors())
+            {
+                if (validationOutput is ValidationOutputBadRequest)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting ProductsCollection Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    return BadRequest(validationOutput.FoundErrors);
+                }
+
+                if (validationOutput is ValidationOutputNotFound)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting ProductsCollection Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    return NotFound(validationOutput.FoundErrors);
+                }
+
+                _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+            }
+            else
+            {
+                IEnumerable<ProductCollectionDto> list = (List<ProductCollectionDto>) validationOutput.DesiredReturn;
+                _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting ProductsCollection: {0}", (EnumerableUtils.convert(list)));
+                return Ok(list);
             }
         }
 
@@ -181,14 +255,19 @@ namespace MerryClosets.Controllers
          * PUT method that will update the name and the description of the catalog with the passed reference.
          */
         [HttpPut("{reference}")]
-        public async Task<IActionResult> UpdateCatalog([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] CatalogDto catalogDto)
+        public async Task<IActionResult> UpdateCatalog([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] CatalogDto catalogDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
                 return Unauthorized();
             }
-            
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             _logger.logInformation(userRef, LoggingEvents.UpdateItem, "Updating By Reference: {0}", reference);
             ValidationOutput validationOutput = _catalogService.Update(reference, catalogDto);
             if (validationOutput.HasErrors())
@@ -203,6 +282,11 @@ namespace MerryClosets.Controllers
                 {
                     _logger.logCritical(userRef, LoggingEvents.UpdateNotFound, "Updating Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
+                }
+                if (validationOutput is ValidationOutputForbidden)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.UpdateForbidden, "Updating Failed: {0}", ((ValidationOutputForbidden)validationOutput).ToString());
+                    return new ForbiddenObjectResult(validationOutput.FoundErrors);
                 }
 
                 _logger.logCritical(userRef, LoggingEvents.UpdateInternalError, "Type of validation output not recognized. Please contact your software provider.");
@@ -222,14 +306,19 @@ namespace MerryClosets.Controllers
          * DELETE method that will delete the catalog with the passed reference.
          */
         [HttpDelete("{reference}")]
-        public async Task<IActionResult> DeleteCatalog([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
+        public async Task<IActionResult> DeleteCatalog([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
                 return Unauthorized();
             }
-            
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             _logger.logInformation(userRef, LoggingEvents.SoftDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _catalogService.Remove(reference);
             if (validationOutput.HasErrors())
@@ -261,14 +350,19 @@ namespace MerryClosets.Controllers
          * DELETE method that allows the removal of Configured Products from a Catalog (each Configured Product is associated with a Collection in the form of an object of type ProductCollection)
          */
         [HttpDelete("{reference}/various-product-collection")]
-        public async Task<IActionResult> DeleteVariousProductCollection([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<ProductCollectionDto> enumerableProductCollectionDto)
+        public async Task<IActionResult> DeleteVariousProductCollection([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<ProductCollectionDto> enumerableProductCollectionDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
                 return Unauthorized();
             }
-            
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerableProductCollectionDto);

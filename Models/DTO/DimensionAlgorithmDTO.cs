@@ -1,11 +1,12 @@
 using JsonSubTypes;
 using Newtonsoft.Json;
+using MerryClosets.Utils;
 
 namespace MerryClosets.Models.DTO
 {
-    [JsonConverter(typeof(JsonSubtypes), "$type")]
-    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithmDto), "ratioAlgorithm")]
-    public class DimensionAlgorithmDto : AlgorithmDto
+    [JsonConverter(typeof(JsonSubtypes), "type")]
+    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithmDto), RestrictionName.RATIO_ALGORITHM)]
+    public abstract class DimensionAlgorithmDto : AlgorithmDto
     {
         public enum RestrictionDtoType
         {

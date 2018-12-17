@@ -12652,8 +12652,6 @@
       "AutoMapper.Extensions.Microsoft.DependencyInjection >= 5.0.1",
       "JsonSubTypes >= 1.5.1",
       "Microsoft.AspNetCore.App >= 2.1.1",
-      "Microsoft.AspNetCore.Cors >= 2.1.1",
-      "Microsoft.AspNetCore.Http.Abstractions >= 2.1.1",
       "Microsoft.EntityFrameworkCore.SQLite >= 2.1.4",
       "Microsoft.EntityFrameworkCore.SqlServer >= 2.1.4",
       "Microsoft.NETCore.App >= 2.1.0",
@@ -12667,11 +12665,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\diogo\\Documents\\MerryClosetsDeployment\\MerryClosetsProductsDeployment\\MerryClosets.csproj",
+      "projectUniqueName": "c:\\Users\\diogo\\Documents\\CDIO-S5\\cdio-il2018-19sem5-grupo1\\MerryClosetsSolution\\MerryClosets\\MerryClosets.csproj",
       "projectName": "MerryClosets",
-      "projectPath": "C:\\Users\\diogo\\Documents\\MerryClosetsDeployment\\MerryClosetsProductsDeployment\\MerryClosets.csproj",
+      "projectPath": "c:\\Users\\diogo\\Documents\\CDIO-S5\\cdio-il2018-19sem5-grupo1\\MerryClosetsSolution\\MerryClosets\\MerryClosets.csproj",
       "packagesPath": "C:\\Users\\diogo\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\diogo\\Documents\\MerryClosetsDeployment\\MerryClosetsProductsDeployment\\obj\\",
+      "outputPath": "c:\\Users\\diogo\\Documents\\CDIO-S5\\cdio-il2018-19sem5-grupo1\\MerryClosetsSolution\\MerryClosets\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
@@ -12716,14 +12714,6 @@
             "target": "Package",
             "version": "[2.1.1, )",
             "autoReferenced": true
-          },
-          "Microsoft.AspNetCore.Cors": {
-            "target": "Package",
-            "version": "[2.1.1, )"
-          },
-          "Microsoft.AspNetCore.Http.Abstractions": {
-            "target": "Package",
-            "version": "[2.1.1, )"
           },
           "Microsoft.EntityFrameworkCore.SQLite": {
             "target": "Package",

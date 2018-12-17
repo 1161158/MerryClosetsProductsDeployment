@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using MerryClosets.Models.Animation;
 using MerryClosets.Models.Category;
 using MerryClosets.Models.Collection;
 using MerryClosets.Models.ConfiguredProduct;
@@ -42,6 +43,14 @@ namespace MerryClosets.AutoMapper
             CreateMap<PartAlgorithmDto, PartAlgorithm>().Include<SizePercentagePartAlgorithmDto, SizePercentagePartAlgorithm>().Include<MaterialFinishPartAlgorithmDto, MaterialFinishPartAlgorithm>();
             CreateMap<DimensionAlgorithmDto, DimensionAlgorithm>().Include<RatioAlgorithmDto, RatioAlgorithm>();
             CreateMap<AlgorithmDto, Algorithm>().Include<DimensionAlgorithmDto, DimensionAlgorithm>().Include<PartAlgorithmDto, PartAlgorithm>();
+            CreateMap<ModelGroupDto, ModelGroup>();
+            CreateMap<ComponentDto, Component>();
+            CreateMap<FrontalOpenAnimationDto, FrontalOpenAnimation>();
+            CreateMap<LateralOpenAnimationDto, LateralOpenAnimation>();
+            CreateMap<SlidingLeftAnimationDto, SlidingLeftAnimation>();
+            CreateMap<SlidingRightAnimationDto, SlidingRightAnimation>();
+            CreateMap<SlidingOpenAnimationDto, SlidingOpenAnimation>().Include<SlidingLeftAnimationDto, SlidingLeftAnimation>().Include<SlidingRightAnimationDto, SlidingRightAnimation>();
+            CreateMap<AnimationDto, Animation>().Include<FrontalOpenAnimationDto, FrontalOpenAnimation>().Include<LateralOpenAnimationDto, LateralOpenAnimation>().Include<SlidingOpenAnimationDto, SlidingOpenAnimation>();
         }
 
     }

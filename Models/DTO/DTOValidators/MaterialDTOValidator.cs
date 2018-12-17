@@ -55,14 +55,23 @@ namespace MerryClosets.Models.DTO.DTOValidators
         public override ValidationOutput DTOIsValidForUpdate(MaterialDto consideredDto)
         {
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
-            if (!NameIsValid(consideredDto.Name))
+            if (consideredDto.Name != null)
             {
-                validationOutput.AddError("Name of material", "New name'" + consideredDto.Name + "' is not valid!");
+                if (!NameIsValid(consideredDto.Name))
+                {
+                    validationOutput.AddError("Name of material", "New name'" + consideredDto.Name + "' is not valid!");
+                }
             }
-            if (!DescriptionIsValid(consideredDto.Description))
+
+            if (consideredDto.Description != null)
             {
-                validationOutput.AddError("Description of material", "New description'" + consideredDto.Description + "' is not valid!");
+                if (!DescriptionIsValid(consideredDto.Description))
+                {
+                    validationOutput.AddError("Description of material",
+                        "New description'" + consideredDto.Description + "' is not valid!");
+                }
             }
+
             if (consideredDto.Price != null)
             {
                 ValidationOutput priceDTOValidationOutput = _priceDTOValidator.DTOIsValid(consideredDto.Price);

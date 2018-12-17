@@ -1,11 +1,12 @@
 using JsonSubTypes;
 using Newtonsoft.Json;
+using MerryClosets.Utils;
 
 namespace MerryClosets.Models.Product
 {
     [JsonConverter(typeof(JsonSubtypes))]
-    [JsonSubtypes.KnownSubType(typeof(DiscreteValue), "discrete")]
-    [JsonSubtypes.KnownSubType(typeof(ContinuousValue), "continuous")]
+    [JsonSubtypes.KnownSubType(typeof(DiscreteValue), RestrictionName.DISCRETE_VALUE)]
+    [JsonSubtypes.KnownSubType(typeof(ContinuousValue), RestrictionName.CONTINUOUS_VALUE)]
     public abstract class Values : ValueObject
     {
         public abstract bool IsValid(int value);

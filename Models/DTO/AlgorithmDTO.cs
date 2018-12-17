@@ -1,16 +1,18 @@
 using JsonSubTypes;
 using Newtonsoft.Json;
+using MerryClosets.Utils;
 
 namespace MerryClosets.Models.DTO
 {
-    [JsonConverter(typeof(JsonSubtypes), "$type")]
-    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithmDto), "materialFinishPartAlgorithm")]
-    [JsonSubtypes.KnownSubType(typeof(MaterialPartAlgorithmDto), "materialPartAlgorithm")]
-    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithmDto), "ratioAlgorithm")]
-    [JsonSubtypes.KnownSubType(typeof(SizePartAlgorithmDto), "sizePartAlgorithm")]
-    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithmDto), "sizePercentagePartAlgorithm")]
-    public class AlgorithmDto : ValueObjectDto
+    [JsonConverter(typeof(JsonSubtypes), "type")]
+    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithmDto), RestrictionName.MATERIAL_FINISH_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(MaterialPartAlgorithmDto), RestrictionName.MATERIAL_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithmDto), RestrictionName.RATIO_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(SizePartAlgorithmDto), RestrictionName.SIZE_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithmDto), RestrictionName.SIZE_PERCENTAGE_PART_ALGORITHM)]
+    public abstract class AlgorithmDto : ValueObjectDto
     {
+        public string type;
         public enum RestrictionDtoType
         {
             MaterialFinishPartAlgorithmDto = 1,

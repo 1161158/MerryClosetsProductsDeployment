@@ -17,21 +17,30 @@ namespace MerryClosets.Repositories.EF
         {
         }
 
-        public override ConfiguredProduct GetById(long id) {
+        public override ConfiguredProduct GetById(long id)
+        {
             var product = base.GetQueryable().Where(cp => cp.Id == id).Include(cp => cp.Parts).Include(cp => cp.ConfiguredMaterial).ThenInclude(cm => cm.ColorReference).Include(cp => cp.ConfiguredMaterial).ThenInclude(cm => cm.FinishReference).Include(cp => cp.ConfiguredDimension).FirstOrDefault();
-            if(product == null){
+            if (product == null)
+            {
                 product = base.GetById(id);
             }
             return product;
         }
 
-        public override ConfiguredProduct GetByReference(string reference){
+        public override ConfiguredProduct GetByReference(string reference)
+        {
             return this.GetQueryable()
             .Include(cp => cp.ConfiguredMaterial)
-            .Include(cp => cp.Parts).Include(cp => cp.Price)
+            .Include(cp => cp.Parts)
+            .Include(cp => cp.Price)
             .Include(cp => cp.ConfiguredDimension)
             .Include(cp => cp.ConfiguredSlots)
             .FirstOrDefault(cp => cp.Reference == reference);
+        }
+
+        public override List<ConfiguredProduct> List()
+        {
+            return base.GetActiveQueryable().Include(p => p.Price).ToList();
         }
 
         public int ConfiguredProductsLenght()

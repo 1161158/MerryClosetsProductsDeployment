@@ -41,14 +41,17 @@ namespace MerryClosets.Controllers.Product
          * POST method that will create a new product in the system.
          */
         [HttpPost]
-        public async Task<IActionResult> CreateProduct([FromHeader(Name="Authorization")] string authorization, [FromBody] ProductDto productDto)
+        public async Task<IActionResult> CreateProduct( [FromHeader(Name = "Authorization")] string authorization, [FromBody] ProductDto productDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
                 return Unauthorized();
             }
-            
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             _logger.logInformation(userRef, LoggingEvents.PostItem, "Creating By Dto: {0}", productDto.Reference);
             ValidationOutput validationOutput = _productService.Register(productDto);
             if (validationOutput.HasErrors())
@@ -71,7 +74,7 @@ namespace MerryClosets.Controllers.Product
             else
             {
                 ProductDto newProductDto = (ProductDto)validationOutput.DesiredReturn;
-                _logger.logInformation(userRef, LoggingEvents.PostOk, "Creating Product Succeeded: {0}",newProductDto.ToString());
+                _logger.logInformation(userRef, LoggingEvents.PostOk, "Creating Product Succeeded: {0}", newProductDto.ToString());
                 return CreatedAtRoute("GetProduct", new { reference = newProductDto.Reference }, newProductDto);
             }
         }
@@ -80,13 +83,18 @@ namespace MerryClosets.Controllers.Product
          * POST method that allows the addition of materials in which a product can be built, to the product with the passed reference.
          */
         [HttpPost("{reference}/materials")]
-        public async Task<IActionResult> AddMaterials([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody]  IEnumerable<ProductMaterialDto> enumerableProductMaterialDto)
+        public async Task<IActionResult> AddMaterials([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody]  IEnumerable<ProductMaterialDto> enumerableProductMaterialDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerableProductMaterialDto);
@@ -113,7 +121,7 @@ namespace MerryClosets.Controllers.Product
             {
                 _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Materials to Product Succeeded: {0}", array[1]);
                 return Ok(validationOutput.DesiredReturn);
-                
+
             }
         }
 
@@ -121,13 +129,18 @@ namespace MerryClosets.Controllers.Product
          * POST method that allows the addition of products which a product can be complemented with, to the product with the passed reference.
          */
         [HttpPost("{reference}/parts")]
-        public async Task<IActionResult> AddParts([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<PartDto> enumerablePartDto)
+        public async Task<IActionResult> AddParts([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<PartDto> enumerablePartDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerablePartDto);
@@ -154,7 +167,7 @@ namespace MerryClosets.Controllers.Product
             {
                 _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Parts to Product Succeeded: {0}", array[1]);
                 return Ok(validationOutput.DesiredReturn);
-                
+
             }
         }
 
@@ -162,20 +175,25 @@ namespace MerryClosets.Controllers.Product
          * POST method that allows the addition of dimension values to the product with the passed reference.
          */
         [HttpPost("{reference}/dimension-values")]
-        public async Task<IActionResult> AddDimensionValues([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> dimensionValuesDto)
+        public async Task<IActionResult> AddDimensionValues([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> dimensionValuesDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             object[] array = new object[2];
-            
+
             array[0] = reference;
             List<DimensionValuesDto> dtos = dimensionValuesDto.ToList();
-            
+
             var sb = new StringBuilder();
-            
+
             for (var j = 0; j < dtos.Count; j++)
             {
                 sb.Append("{Possible Heights: ");
@@ -215,12 +233,18 @@ namespace MerryClosets.Controllers.Product
         }
 
         [HttpPost("{reference}/restriction")]
-        public async  Task<IActionResult> AddRestriction([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] AlgorithmDto restriction){
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+        public async Task<IActionResult> AddRestriction([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] AlgorithmDto restriction)
+        {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             object[] array = new object[2];
             array[0] = reference;
             array[1] = restriction.ToString();
@@ -246,38 +270,50 @@ namespace MerryClosets.Controllers.Product
             else
             {
                 _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Restriction to Product Succeeded: {0}", "");
-                return Ok(validationOutput.DesiredReturn);            
+                return Ok(validationOutput.DesiredReturn);
             }
         }
 
         [HttpPost("{reference}/part-restriction")]
-        public IActionResult AddRestriction([FromRoute] string reference, [FromBody] PartDto partRestriction){
+        public async Task<IActionResult> AddRestriction([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] PartDto partRestriction)
+        {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
             object[] array = new object[2];
             array[0] = reference;
             array[1] = partRestriction.ToString();
-            _logger.logInformation(LoggingEvents.PostItem, "Adding Restriction By Reference: {0} -- {1}", array);
+            _logger.logInformation(userRef, LoggingEvents.PostItem, "Adding Restriction By Reference: {0} -- {1}", array);
             ValidationOutput validationOutput = _productService.AddPartRestriction(reference, partRestriction);
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
                 {
-                    _logger.logCritical(LoggingEvents.PostBadRequest, "Adding Restriction Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    _logger.logCritical(userRef, LoggingEvents.PostBadRequest, "Adding Restriction Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
                     return BadRequest(validationOutput.FoundErrors);
                 }
 
                 if (validationOutput is ValidationOutputNotFound)
                 {
-                    _logger.logCritical(LoggingEvents.PostNotFound, "Adding Restriction Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    _logger.logCritical(userRef, LoggingEvents.PostNotFound, "Adding Restriction Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
                 }
 
-                _logger.logCritical(LoggingEvents.PostInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                _logger.logCritical(userRef, LoggingEvents.PostInternalError, "Type of validation output not recognized. Please contact your software provider.");
                 return BadRequest("Type of validation output not recognized. Please contact your software provider.");
             }
             else
             {
-                _logger.logInformation(LoggingEvents.PostOk, "Adding Restriction to Product Succeeded: {0}", "");
-                return Ok(validationOutput.DesiredReturn);            
+                var desiredReturn = (ProductDto) validationOutput.DesiredReturn;
+                _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Restriction to Product Succeeded: {0}", desiredReturn.Reference);
+                return Ok(desiredReturn);
             }
         }
 
@@ -287,53 +323,71 @@ namespace MerryClosets.Controllers.Product
          * GET method that will return all existent products in the system.
          */
         [HttpGet]
-        public async Task<IActionResult> GetAllProducts([FromHeader(Name="Authorization")] string authorization)
+        public async Task<IActionResult> GetAllProducts([FromHeader(Name = "Authorization")] string authorization)
         {
-            var userRef = "";
-            if (authorization != null)
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
             {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+                return Unauthorized();
             }
-            
+            if (!(await _userValidationService.Validate(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
             IEnumerable<ProductDto> list = _productService.GetAll();
             _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Products: {0}", EnumerableUtils.convert(list));
-            return Ok(list);           
+            return Ok(list);
         }
 
         /**
          * GET method that will return the product with the given reference.
          */
         [HttpGet("{reference}", Name = "GetProduct")]
-        public async Task<IActionResult> GetProduct([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
+        public async Task<IActionResult> GetProduct( /* [FromHeader(Name = "Authorization")] string authorization, */  [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            }
+            // if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+            //      return Unauthorized();
+            // }
             
-            _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
-            ValidationOutput validationOutput = _productService.GetByReference(reference);
+            //  var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            ValidationOutput validationOutput;
+            
+            // if(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])) {
+                //  _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                 validationOutput = _productService.GetByReference(reference);
+            // }
+            // else if(await _userValidationService.Validate(authorization.Split(" ")[1]))
+            // {
+            //     _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+            //      validationOutput = _productService.ClientGetByReference(reference);
+            // }
+            // else
+            // {
+            //     return Unauthorized();
+            // }
+
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
                 {
-                    _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Product Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    // _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Product Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
                     return BadRequest(validationOutput.FoundErrors);
                 }
 
                 if (validationOutput is ValidationOutputNotFound)
                 {
-                    _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Product Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    // _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Product Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
                 }
 
-                _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                // _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
                 return BadRequest("Type of validation output not recognized. Please contact your software provider.");
             }
             else
             {
-                _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Product: {0}", ((ProductDto) validationOutput.DesiredReturn).ToString());
+                // _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Product: {0}", ((ProductDto)validationOutput.DesiredReturn).ToString());
                 return Ok((ProductDto)validationOutput.DesiredReturn);
             }
         }
@@ -342,14 +396,19 @@ namespace MerryClosets.Controllers.Product
          * GET method that will return all the materials that were associated with the product with the passed reference.
          */
         [HttpGet("{reference}/materials")]
-        public async Task<IActionResult> GetMaterialsAvailableToProduct([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
+        public async Task<IActionResult> GetMaterialsAvailableToProduct([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
             {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+                return Unauthorized();
             }
-            
+            if (!(await _userValidationService.Validate(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
             _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.GetMaterialsAvailableToProduct(reference);
             if (validationOutput.HasErrors())
@@ -372,7 +431,7 @@ namespace MerryClosets.Controllers.Product
             else
             {
                 _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Materials: {0}",
-                    EnumerableUtils.convert((List<MaterialDto>) validationOutput.DesiredReturn));
+                    EnumerableUtils.convert((List<MaterialDto>)validationOutput.DesiredReturn));
                 return Ok((List<MaterialDto>)validationOutput.DesiredReturn);
             }
         }
@@ -381,14 +440,19 @@ namespace MerryClosets.Controllers.Product
          * GET method that will return all the products that can complement the product with the passed reference.
          */
         [HttpGet("{reference}/parts")]
-        public async Task<IActionResult> GetPartProductsAvailableToProduct([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
+        public async Task<IActionResult> GetPartProductsAvailableToProduct([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
             {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+                return Unauthorized();
             }
-            
+            if (!(await _userValidationService.Validate(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
             _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.GetPartProductsAvailableToProduct(reference);
             if (validationOutput.HasErrors())
@@ -421,13 +485,18 @@ namespace MerryClosets.Controllers.Product
          * PUT method that will update the name, the description and the price of the product with the passed reference.
          */
         [HttpPut("{reference}")]
-        public async Task<IActionResult> UpdateProduct([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] ProductDto productDto)
+        public async Task<IActionResult> UpdateProduct([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] ProductDto productDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             _logger.logInformation(userRef, LoggingEvents.UpdateItem, "Updating By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.Update(reference, productDto);
             if (validationOutput.HasErrors())
@@ -443,6 +512,11 @@ namespace MerryClosets.Controllers.Product
                     _logger.logCritical(userRef, LoggingEvents.UpdateNotFound, "Updating Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
                 }
+                if (validationOutput is ValidationOutputForbidden)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.UpdateForbidden, "Updating Failed: {0}", ((ValidationOutputForbidden)validationOutput).ToString());
+                    return new ForbiddenObjectResult(validationOutput.FoundErrors);
+                }
 
                 _logger.logCritical(userRef, LoggingEvents.UpdateInternalError, "Type of validation output not recognized. Please contact your software provider.");
                 return BadRequest("Type of validation output not recognized. Please contact your software provider.");
@@ -455,19 +529,58 @@ namespace MerryClosets.Controllers.Product
             }
         }
 
+        [HttpPut("{reference}/modelGroup")]
+        public async Task<IActionResult> UpdateModelGroup(/* [FromHeader(Name = "Authorization")] string authorization, */ [FromRoute] string reference, [FromBody] ModelGroupDto dto)
+        {
+            // if (!_userValidationService.CheckAuthorizationToken(authorization))
+            // {
+            //     return Unauthorized();
+            // }
+            // if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            // {
+            //     return Unauthorized();
+            // }
+            // var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            
+            ValidationOutput validationOutput = _productService.UpdateModelGroup(reference, dto);
+            if (validationOutput.HasErrors())
+            {
+                if (validationOutput is ValidationOutputBadRequest)
+                {
+                    return BadRequest(validationOutput.FoundErrors);
+                }
+
+                if (validationOutput is ValidationOutputNotFound)
+                {
+                    return NotFound(validationOutput.FoundErrors);
+                }
+
+                return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+            }
+            else
+            {
+                return NoContent();
+            }
+        }
+
         // ========= DELETE METHODS =========
 
         /**
          * DELETE method that will soft-delete the product with the passed reference.
          */
         [HttpDelete("{reference}")]
-        public async Task<IActionResult> DeleteProduct([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
+        public async Task<IActionResult> DeleteProduct([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             _logger.logInformation(userRef, LoggingEvents.SoftDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.Remove(reference);
             if (validationOutput.HasErrors())
@@ -499,13 +612,18 @@ namespace MerryClosets.Controllers.Product
          * DELETE method that will delete the list of passed materials from the product with the passed reference.
          */
         [HttpDelete("{reference}/materials")]
-        public async Task<IActionResult> DeleteMaterials([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody]  IEnumerable<MaterialDto> enumerableMaterial)
+        public async Task<IActionResult> DeleteMaterials([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody]  IEnumerable<MaterialDto> enumerableMaterial)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             _logger.logInformation(userRef, LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.DeleteMaterialsAndRespectiveAlgorithms(reference, enumerableMaterial);
             if (validationOutput.HasErrors())
@@ -537,13 +655,18 @@ namespace MerryClosets.Controllers.Product
          * DELETE method that will delete the list of passed parts from the product with the passed reference.
          */
         [HttpDelete("{reference}/parts")]
-        public async Task<IActionResult> DeleteParts([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<ProductDto> enumerableProductReference)
+        public async Task<IActionResult> DeleteParts([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<ProductDto> enumerableProductReference)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             _logger.logInformation(userRef, LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.DeleteProductsAndRespectiveAlgorithms(reference, enumerableProductReference);
             if (validationOutput.HasErrors())
@@ -575,13 +698,18 @@ namespace MerryClosets.Controllers.Product
          * DELETE method that will delete the list of dimension values from the product with the passed reference.
          */
         [HttpDelete("{reference}/dimension-values")]
-        public async Task<IActionResult> DeleteDimensionValues([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
+        public async Task<IActionResult> DeleteDimensionValues([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             _logger.logInformation(userRef, LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
             ValidationOutput validationOutput = _productService.DeleteVariousDimensionValues(reference, enumerableDimensionValuesDto);
             if (validationOutput.HasErrors())

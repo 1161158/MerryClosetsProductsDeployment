@@ -13,6 +13,8 @@ namespace MerryClosets.Services.EF {
         static string validationUrl = "https://merryclosetsusers.herokuapp.com/users/validate";
         static string userRefUrl = "https://merryclosetsusers.herokuapp.com/users/user-ref";
 
+        private static ValidationResult _validationResult;
+
         private class Token {
             public string token { get; set; }
         }
@@ -24,16 +26,13 @@ namespace MerryClosets.Services.EF {
 
         static HttpClient client = new HttpClient();
 
-        public async Task<bool> validateContentManager(string tokenString) {
+        public async Task<bool> ValidateContentManager(string tokenString) {
             Token token = new Token();
             token.token = tokenString;
 
-            HttpResponseMessage response = await client.PostAsJsonAsync(validationUrl, token);
-
-            var statusCode = response.StatusCode;
-
-            if(statusCode == HttpStatusCode.OK) {
-                if(isContentManager(await response.Content.ReadAsAsync<ValidationResult>())) {
+            
+            if(await Validate(tokenString)) {
+                if(IsContentManager(_validationResult.roles)) {
                     return true;
                 } else {
                     return false;
@@ -41,6 +40,24 @@ namespace MerryClosets.Services.EF {
             } else {
                 return false;
             }
+        }
+
+        public async Task<bool> Validate(string tokenString)
+        {
+            Token token = new Token();
+            token.token = tokenString;
+
+            HttpResponseMessage response = await client.PostAsJsonAsync(validationUrl, token);
+
+            var statusCode = response.StatusCode;
+
+            if (statusCode == HttpStatusCode.OK)
+            {
+                _validationResult = await response.Content.ReadAsAsync<ValidationResult>();
+                return true;
+            }
+
+            return false;
         }
 
         public async Task<string> GetUserRef(string tokenString)
@@ -60,10 +77,19 @@ namespace MerryClosets.Services.EF {
 
             return "";
         }
+
+        public bool CheckAuthorizationToken(string authorization) {
+            try {
+                string token = authorization.Split(" ")[1];
+                return true;
+            } catch (Exception e){
+                return false;
+            }
+        }
         
-        private bool isContentManager(ValidationResult result) {
-            for(int i = 0; i < result.roles.Length; i++) {
-                if(result.roles[i] == "Content Manager") {
+        private bool IsContentManager(string[] roles) {
+            for(int i = 0; i < roles.Length; i++) {
+                if(roles[i] == "Content Manager") {
                     return true;
                 }
             }

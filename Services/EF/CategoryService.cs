@@ -42,6 +42,17 @@ namespace MerryClosets.Services.EF
             var category = _categoryRepository.GetByReference(reference);
             return category != null;
         }
+        
+        private bool ExistsAndIsActive(string reference)
+        {
+            var category = _categoryRepository.GetByReference(reference);
+            if (category != null && category.IsActive)
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         // ============ Methods to CREATE something ============
 
@@ -122,6 +133,29 @@ namespace MerryClosets.Services.EF
             validationOutput.DesiredReturn = _mapper.Map<CategoryDto>(_categoryRepository.GetByReference(refer));
             return validationOutput;
         }
+        
+        /**
+        * Method that will return either the category in the form of a DTO that has the passed reference OR all the errors found when trying to do so.
+        * 
+        * Validations performed:
+        * 1. Validation of the passed category's reference (database);
+        * 
+        * This method can return a soft-deleted category.
+        */
+        public ValidationOutput ClientGetByReference(string refer)
+        {
+            //1.
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!ExistsAndIsActive(refer))
+            {
+                validationOutput.AddError("Category's reference",
+                    "No category with the reference '" + refer + "' exists in the system.");
+                return validationOutput;
+            }
+
+            validationOutput.DesiredReturn = _mapper.Map<CategoryDto>(_categoryRepository.GetByReference(refer));
+            return validationOutput;
+        }
 
         /**
          * Method that will return all categories present in the system, each in the form of a DTO OR all the errors found when trying to do so.
@@ -163,6 +197,13 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
+            validationOutput = new ValidationOutputForbidden();
+            if (dto.Reference != null)
+            {
+                validationOutput.AddError("Reference of category", "It's not allowed to update reference.");
+                return validationOutput;
+            }
+            
             //2.
             validationOutput = _categoryDTOValidator.DTOIsValidForUpdate(dto);
             if (validationOutput.HasErrors())
@@ -172,8 +213,15 @@ namespace MerryClosets.Services.EF
 
             Category categoryToUpdate = _categoryRepository.GetByReference(refer);
 
-            categoryToUpdate.Name = dto.Name;
-            categoryToUpdate.Description = dto.Description;
+            if (dto.Name != null)
+            {
+                categoryToUpdate.Name = dto.Name;
+            }
+
+            if (dto.Description != null)
+            {
+                categoryToUpdate.Description = dto.Description;
+            }
 
             validationOutput.DesiredReturn = _mapper.Map<CategoryDto>(_categoryRepository.Update(categoryToUpdate));
             return validationOutput;

@@ -9,6 +9,7 @@ using MerryClosets.Models.DTO;
 using MerryClosets.Models.DTO.DTOValidators;
 using MerryClosets.Repositories.Interfaces;
 using MerryClosets.Services.Interfaces;
+using MerryClosets.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace MerryClosets.Services.EF
@@ -41,6 +42,17 @@ namespace MerryClosets.Services.EF
             return collection != null;
         }
 
+        private bool ExistsAndIsActive(string reference)
+        {
+            var collection = _collectionRepository.GetByReference(reference);
+            if (collection != null && collection.IsActive)
+            {
+                return true;
+            }
+
+            return false;
+        }
+        
         /**
          * Private method used to verify the existence of a configured product in the DB, through its unique reference.
          */
@@ -166,6 +178,28 @@ namespace MerryClosets.Services.EF
             validationOutput.DesiredReturn = _mapper.Map<CollectionDto>(_collectionRepository.GetByReference(reference));
             return validationOutput;
         }
+        
+        /**
+         * Method that will return either the collection in the form of a DTO that has the passed reference OR all the errors found when trying to do so.
+         * 
+         * Validations performed:
+         * 1. Validation of the passed collection's reference (database);
+         * 
+         * This method can return a soft-deleted category.
+         */
+        public ValidationOutput ClientGetByReference(string reference)
+        {
+            //1.
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!ExistsAndIsActive(reference))
+            {
+                validationOutput.AddError("Reference of collection", "No collection with the reference '" + reference + "' exists in the system.");
+                return validationOutput;
+            }
+
+            validationOutput.DesiredReturn = _mapper.Map<CollectionDto>(_collectionRepository.GetByReference(reference));
+            return validationOutput;
+        }
 
         /**
          * Method that will return all collections present in the system, each in the form of a DTO OR all the errors found when trying to do so.
@@ -205,6 +239,13 @@ namespace MerryClosets.Services.EF
                 validationOutput.AddError("Reference of collection", "No collection with the reference '" + reference + "' exists in the system.");
                 return validationOutput;
             }
+            
+            validationOutput = new ValidationOutputForbidden();
+            if (dto.Reference != null)
+            {
+                validationOutput.AddError("Reference of collection", "It's not allowed to update reference.");
+                return validationOutput;
+            }
 
             //2.
             validationOutput = _collectionDTOValidator.DTOIsValidForUpdate(dto);
@@ -215,8 +256,15 @@ namespace MerryClosets.Services.EF
 
             Collection collectionToUpdate = _collectionRepository.GetByReference(reference);
 
-            collectionToUpdate.Name = dto.Name;
-            collectionToUpdate.Description = dto.Description;
+            if (dto.Name != null)
+            {
+                collectionToUpdate.Name = dto.Name;
+            }
+
+            if (dto.Description != null)
+            {
+                collectionToUpdate.Description = dto.Description;
+            }
 
             validationOutput.DesiredReturn = _mapper.Map<CollectionDto>(_collectionRepository.Update(collectionToUpdate));
             return validationOutput;
@@ -248,6 +296,26 @@ namespace MerryClosets.Services.EF
 
         // ============ Business Methods ============
 
+        public ValidationOutput GetProductsCollection(string reference){
+            //1.
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!CollectionExists(reference))
+            {
+                validationOutput.AddError("Reference of collection", "No collection with the reference '" + reference + "' exists in the system.");
+                return validationOutput;
+            }
+            var collection = _collectionRepository.GetByReference(reference);
+
+            List<ConfiguredProductDto> returnList = new List<ConfiguredProductDto>();
+
+            foreach(var configuredProductCollection in collection.ProductCollectionList){
+                var configuredProduct = _configuredProductRepository.GetByReference(configuredProductCollection.ConfiguredProductReference);
+                returnList.Add(this._mapper.Map<ConfiguredProductDto>(configuredProduct));
+            }
+            validationOutput.DesiredReturn = returnList;
+            return validationOutput;
+        }
+
         /**
          * Method that will add new configured products to the collection with the passed reference.
          * It is assumed that a list with 1 or more objects is received.
@@ -260,7 +328,7 @@ namespace MerryClosets.Services.EF
             * 4. Validation of the existence of current configured product in the collection with the passed reference
             * 5. Validation for duplication between each configured product reference received
          */
-        public ValidationOutput AddConfiguredProducts(string reference, IEnumerable<ProductCollectionDto> enumerableConfiguredProductReference)
+        public ValidationOutput AddConfiguredProducts(string reference, IEnumerable<ConfiguredProductDto> enumerableConfiguredProduct)
         {
             //1.
             ValidationOutput validationOutput = new ValidationOutputNotFound();
@@ -272,10 +340,10 @@ namespace MerryClosets.Services.EF
 
             Collection collectionToModify = _collectionRepository.GetByReference(reference);
 
-            List<ProductCollectionDto> configuredProductReferenceList = new List<ProductCollectionDto>(enumerableConfiguredProductReference);
+            List<ConfiguredProductDto> configuredProductList = new List<ConfiguredProductDto>(enumerableConfiguredProduct);
             //2.
             validationOutput = new ValidationOutputBadRequest();
-            if (configuredProductReferenceList.Count == 0)
+            if (configuredProductList.Count == 0)
             {
                 validationOutput.AddError("Selected configured products", "No configured products were selected!");
                 return validationOutput;
@@ -283,30 +351,30 @@ namespace MerryClosets.Services.EF
 
             List<string> configuredProductListToAdd = new List<string>();
 
-            foreach (var configuredProductReference in configuredProductReferenceList)
+            foreach (var configuredProduct in configuredProductList)
             {
                 //3.
-                if (!ConfiguredProductExists(configuredProductReference.ConfiguredProductReference))
+                if (!ConfiguredProductExists(configuredProduct.Reference))
                 {
-                    validationOutput.AddError("Reference of configured product", "No configured product with the reference '" + configuredProductReference + "' exists in the system.");
+                    validationOutput.AddError("Reference of configured product", "No configured product with the reference '" + configuredProduct.Reference + "' exists in the system.");
                     return validationOutput;
                 }
 
                 //4.
-                if (collectionToModify.ConfiguredProductIsInCollection(configuredProductReference.ConfiguredProductReference))
+                if (collectionToModify.ConfiguredProductIsInCollection(configuredProduct.Reference))
                 {
-                    validationOutput.AddError("Configured product", "Configured product '" + configuredProductReference + "' already belongs to collection with reference '" + reference + "'.");
+                    validationOutput.AddError("Configured product", "Configured product '" + configuredProduct.Reference + "' already belongs to collection with reference '" + reference + "'.");
                     return validationOutput;
                 }
 
                 //5.
-                if (configuredProductListToAdd.Contains(configuredProductReference.ConfiguredProductReference))
+                if (configuredProductListToAdd.Contains(configuredProduct.Reference))
                 {
-                    validationOutput.AddError("Configured product", "Configured product '" + configuredProductReference + "' is duplicated in the list of configured product selected!");
+                    validationOutput.AddError("Configured product", "Configured product '" + configuredProduct.Reference + "' is duplicated in the list of configured product selected!");
                     return validationOutput;
                 }
 
-                configuredProductListToAdd.Add(configuredProductReference.ConfiguredProductReference);
+                configuredProductListToAdd.Add(configuredProduct.Reference);
             }
 
             foreach (var configuredProductToAdd in configuredProductListToAdd)
@@ -314,7 +382,7 @@ namespace MerryClosets.Services.EF
                 collectionToModify.AddConfiguredProduct(configuredProductToAdd);
             }
 
-            validationOutput.DesiredReturn = enumerableConfiguredProductReference;
+            validationOutput.DesiredReturn = configuredProductListToAdd;
             _collectionRepository.Update(collectionToModify);
             return validationOutput;
         }
@@ -330,7 +398,7 @@ namespace MerryClosets.Services.EF
             * 3. Validation of the existence of current configured product in the collection with the passed reference
             * 4. Validation for duplication between each configured product reference received
          */
-        public ValidationOutput DeleteConfiguredProducts(string reference, IEnumerable<ProductCollectionDto> enumerableConfiguredProductReference)
+        public ValidationOutput DeleteConfiguredProducts(string reference, IEnumerable<ConfiguredProductDto> enumerableConfiguredProduct)
         {
             //1.
             ValidationOutput validationOutput = new ValidationOutputNotFound();
@@ -341,11 +409,11 @@ namespace MerryClosets.Services.EF
             }
 
             Collection collectionToModify = _collectionRepository.GetByReference(reference);
-
-            List<ProductCollectionDto> configuredProductReferenceList = new List<ProductCollectionDto>(enumerableConfiguredProductReference);
+            List<ConfiguredProductDto> configuredProductList = new List<ConfiguredProductDto>(enumerableConfiguredProduct);
+            
             //2.
             validationOutput = new ValidationOutputBadRequest();
-            if (configuredProductReferenceList.Count == 0)
+            if (configuredProductList.Count == 0)
             {
                 validationOutput.AddError("Selected configured products", "No configured products were selected!");
                 return validationOutput;
@@ -353,23 +421,23 @@ namespace MerryClosets.Services.EF
 
             List<string> configuredProductListToRemove = new List<string>();
 
-            foreach (var configuredProductReference in configuredProductReferenceList)
+            foreach (var configuredProduct in configuredProductList)
             {
                 //3.
-                if (!collectionToModify.ConfiguredProductIsInCollection(configuredProductReference.ConfiguredProductReference))
+                if (!collectionToModify.ConfiguredProductIsInCollection(configuredProduct.Reference))
                 {
-                    validationOutput.AddError("Configured product", "Configured product '" + configuredProductReference + "' does not belong to collection with reference '" + reference + "'.");
+                    validationOutput.AddError("Configured product", "Configured product '" + configuredProduct.Reference + "' does not belong to collection with reference '" + reference + "'.");
                     return validationOutput;
                 }
 
                 //4.
-                if (configuredProductListToRemove.Contains(configuredProductReference.ConfiguredProductReference))
+                if (configuredProductListToRemove.Contains(configuredProduct.Reference))
                 {
-                    validationOutput.AddError("Configured product", "Configured product '" + configuredProductReference + "' is duplicated in the list of configured product selected!");
+                    validationOutput.AddError("Configured product", "Configured product '" + configuredProduct.Reference + "' is duplicated in the list of configured product selected!");
                     return validationOutput;
                 }
 
-                configuredProductListToRemove.Add(configuredProductReference.ConfiguredProductReference);
+                configuredProductListToRemove.Add(configuredProduct.Reference);
             }
 
             foreach (var configuredProductToRemove in configuredProductListToRemove)

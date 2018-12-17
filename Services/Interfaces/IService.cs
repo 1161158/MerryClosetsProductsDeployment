@@ -10,6 +10,7 @@ namespace MerryClosets.Services.Interfaces
         ValidationOutput Register(DTO dto);
         IEnumerable<DTO> GetAll();
         ValidationOutput GetByReference(string reference);
+        ValidationOutput ClientGetByReference(string reference);
         ValidationOutput Update(string reference, DTO dto);
         ValidationOutput Remove(string reference);
     }

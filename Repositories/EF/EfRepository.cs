@@ -83,22 +83,10 @@ namespace MerryClosets.Repositories.EF
          */
         public T Add(T entity)
         {
-            Console.WriteLine("1. Entity -> {0} -------- EntityState -> {1}\n", entity.Reference,
-                _dbContext.Entry(entity).State);
-            
             entity.IsActive = true;
             entity.Version = 1;
             _dbContext.Set<T>().Add(entity);
             _dbContext.SaveChanges();
-            
-            Console.WriteLine("2. Entity -> {0} -------- EntityState -> {1}\n", entity.Reference,
-                _dbContext.Entry(entity).State);
-
-            _dbContext.Entry(entity).State = EntityState.Added;
-            
-            Console.WriteLine("3. Entity -> {0} -------- EntityState -> {1}\n", entity.Reference,
-                _dbContext.Entry(entity).State);
-            
             return entity;
         }
 

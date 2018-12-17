@@ -6,8 +6,11 @@ namespace MerryClosets.Services.Interfaces
 {
     public interface ICollectionService : IService<Collection, CollectionDto>
     {
-        ValidationOutput AddConfiguredProducts(string reference, IEnumerable<ProductCollectionDto> enumerableConfiguredProductReference);
+        ValidationOutput AddConfiguredProducts(string reference, IEnumerable<ConfiguredProductDto> enumerableConfiguredProduct);
 
-        ValidationOutput DeleteConfiguredProducts(string reference, IEnumerable<ProductCollectionDto> enumerableConfiguredProductReference);
+        ValidationOutput DeleteConfiguredProducts(string reference, IEnumerable<ConfiguredProductDto> enumerableConfiguredProduct);
+        
+        ValidationOutput GetProductsCollection(string reference);
+        
     }
 }

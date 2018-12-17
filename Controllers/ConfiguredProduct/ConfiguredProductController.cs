@@ -45,6 +45,9 @@ namespace MerryClosets.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromHeader(Name="Authorization")] string authorization, ChildConfiguredProductDto receivedDto)
         {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             _logger.logInformation(userRef, LoggingEvents.PostItem, "Creating By Dto: {0}", receivedDto.Reference);
@@ -82,11 +85,14 @@ namespace MerryClosets.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllConfiguredProducts([FromHeader(Name="Authorization")] string authorization)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
             }
+            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             IEnumerable<ConfiguredProductDto> list = _configuredProductService.GetAll();
             _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Configured Products: {0}", EnumerableUtils.convert(list));
@@ -99,14 +105,25 @@ namespace MerryClosets.Controllers
         [HttpGet("{reference}", Name = "GetConfiguredProduct")]
         public async Task<ActionResult> GetByReference([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
             }
-
-            _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
-            ValidationOutput validationOutput = _configuredProductService.GetByReference(reference);
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            ValidationOutput validationOutput;
+            
+            if(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])) {
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _configuredProductService.GetByReference(reference);
+            }
+            else if(await _userValidationService.Validate(authorization.Split(" ")[1]))
+            {
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _configuredProductService.ClientGetByReference(reference);
+            }else
+            {
+                return Unauthorized();
+            }
+            
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
@@ -138,6 +155,9 @@ namespace MerryClosets.Controllers
         [HttpGet("{reference}/all-info")]
         public async Task<ActionResult> GetAllInfoByReference([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
             var userRef = "";
             if (authorization != null)
             {
@@ -173,11 +193,14 @@ namespace MerryClosets.Controllers
         [HttpGet("{reference}/available-products")]
         public async Task<ActionResult> GetAvailableProducts([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
             }
+            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting Available Products By Reference: {0}", reference);
             ValidationOutput validationOutput = _configuredProductService.GetAvailableProducts(reference);
@@ -212,6 +235,9 @@ namespace MerryClosets.Controllers
         [HttpDelete("{reference}")]
         public async Task<IActionResult> DeleteProduct([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             _logger.logInformation(userRef, LoggingEvents.SoftDeleteItem, "Deleting By Reference: {0}", reference);

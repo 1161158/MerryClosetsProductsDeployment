@@ -30,9 +30,26 @@ namespace MerryClosets.Models.DTO.DTOValidators
             return true;
         }
 
+        private bool IsExternalIsValid(bool isExternal)
+        {
+            if (isExternal || !isExternal)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public override ValidationOutput DTOIsValidForRegister(CategoryDto consideredDto)
         {
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
+            if (consideredDto.IsExternal != null)
+            {
+                if (!IsExternalIsValid(consideredDto.IsExternal))
+                {
+                    validationOutput.AddError("Verification of category", "The is external verification'" + consideredDto.IsExternal + "' is not valid!");   
+                }   
+            }
             if (!NameIsValid(consideredDto.Name))
             {
                 validationOutput.AddError("Name of category", "The name'" + consideredDto.Name + "' is not valid!");
@@ -51,15 +68,25 @@ namespace MerryClosets.Models.DTO.DTOValidators
         public override ValidationOutput DTOIsValidForUpdate(CategoryDto consideredDto)
         {
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
-            if (!NameIsValid(consideredDto.Name))
+            if (consideredDto.Name != null)
             {
-                validationOutput.AddError("Name of category", "New name '" + consideredDto.Name + "' is not valid!");
+                if (!NameIsValid(consideredDto.Name))
+                {
+                    validationOutput.AddError("Name of category",
+                        "New name '" + consideredDto.Name + "' is not valid!");
+                }
             }
-            if (!DescriptionIsValid(consideredDto.Description))
+
+            if (consideredDto.Description != null)
             {
-                validationOutput.AddError("Description of category", "New description '" + consideredDto.Description + "' is not valid!");
+                if (!DescriptionIsValid(consideredDto.Description))
+                {
+                    validationOutput.AddError("Description of category",
+                        "New description '" + consideredDto.Description + "' is not valid!");
+                }
             }
-            return validationOutput;
+
+            return validationOutput; 
         }
 
         public override ValidationOutput DTOReferenceIsValid(string categoryReference)

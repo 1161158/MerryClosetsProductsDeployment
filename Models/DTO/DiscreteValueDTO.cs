@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using MerryClosets.Utils;
 
 namespace MerryClosets.Models.DTO
 {
@@ -10,6 +11,7 @@ namespace MerryClosets.Models.DTO
         public DiscreteValueDto(int value)
         {
             this.Value = value;
+            base.type = RestrictionName.DISCRETE_VALUE;
         }
 
         protected DiscreteValueDto() { }

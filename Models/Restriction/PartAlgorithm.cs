@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using JsonSubTypes;
 using Newtonsoft.Json;
+using MerryClosets.Utils;
 
 namespace MerryClosets.Models.Restriction
 {
     [JsonConverter(typeof(JsonSubtypes), "$type")]
-    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithm), "SizePercentagePartAlgorithm")]
-    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithm), "MaterialFinishPartAlgorithm")]
+    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithm), RestrictionName.SIZE_PERCENTAGE_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithm), RestrictionName.MATERIAL_FINISH_PART_ALGORITHM)]
     public abstract class PartAlgorithm : Algorithm
     {
         //public abstract bool validate(Product.Product partProduct, List<ConfiguredProduct.ConfiguredProduct> configuredProductChildren);
@@ -14,8 +15,8 @@ namespace MerryClosets.Models.Restriction
         {
             "MaterialPartAlgorithm",
             "SizePartAlgorithm",
-            "MaterialFinishPartAlgorithm",
-            "SizePercentagePartAlgorithm"
+            RestrictionName.MATERIAL_FINISH_PART_ALGORITHM,
+            RestrictionName.SIZE_PERCENTAGE_PART_ALGORITHM
         });
 
         public enum RestrictionType

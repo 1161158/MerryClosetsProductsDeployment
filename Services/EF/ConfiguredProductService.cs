@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using MerryClosets.Models;
+using MerryClosets.Models.Category;
 using MerryClosets.Models.ConfiguredProduct;
 using MerryClosets.Models.DTO;
 using MerryClosets.Models.DTO.DTOValidators;
@@ -21,18 +22,20 @@ namespace MerryClosets.Services.EF
         private readonly IConfiguredProductRepository _configuredProductRepository;
         private readonly IProductRepository _productRepository;
         private readonly IMaterialRepository _materialRepository;
+        private readonly ICategoryRepository _categoryRepository;
 
         private readonly IProductService _productService;
         
         private readonly ConfiguredProductDTOValidator _configuredProductDTOValidator;
 
-        public ConfiguredProductService(IMapper mapper, IProductService productService, IConfiguredProductRepository configuredProductRepository, IProductRepository productRepository, IMaterialRepository materialRepository, ConfiguredProductDTOValidator configuredProductDTOValidator)
+        public ConfiguredProductService(IMapper mapper, IProductService productService, IConfiguredProductRepository configuredProductRepository, IProductRepository productRepository, IMaterialRepository materialRepository, ICategoryRepository categoryRepository, ConfiguredProductDTOValidator configuredProductDTOValidator)
         {
             _mapper = mapper;
             _productService = productService;
             _configuredProductRepository = configuredProductRepository;
             _productRepository = productRepository;
             _materialRepository = materialRepository;
+            _categoryRepository = categoryRepository;
             _configuredProductDTOValidator = configuredProductDTOValidator;
         }
 
@@ -90,10 +93,16 @@ namespace MerryClosets.Services.EF
 
         private void ChildrenFits(string slotReference, ConfiguredProduct parent, ConfiguredProductDto childDto, ValidationOutput validationOutput)
         {
-            if (!ChildrenHeightFits(slotReference, parent, childDto))
+            Product product = _productRepository.GetByReference(childDto.ProductReference);
+            Category category = _categoryRepository.GetByReference(product.CategoryReference);
+            if (!category.IsExternal)
             {
-                validationOutput.AddError("Configured Product's height", "Parent Configured Product's height is insufficient!");
+                if (!ChildrenHeightFits(slotReference, parent, childDto))
+                {
+                    validationOutput.AddError("Configured Product's height", "Parent Configured Product's height is insufficient!");
+                }
             }
+            
             if (!ChildrenWidthFits(slotReference, parent, childDto))
             {
                 validationOutput.AddError("Configured Product's width", "Parent Configured Product's width is insufficient!");
@@ -441,6 +450,17 @@ namespace MerryClosets.Services.EF
             var totalArea = (2 * (height * depth)) + (2 * (width * depth)) + (height * width);
             return (totalArea * (materialPrice.Value + finishPrice.Value) + productPrice.Value);
         }
+        
+        private bool ExistsAndIsActive(string reference)
+        {
+            var configuredProduct = _configuredProductRepository.GetByReference(reference);
+            if (configuredProduct != null && configuredProduct.IsActive)
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         public ValidationOutput GetByReference(string reference)
         {
@@ -457,6 +477,23 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
             validationOutput.DesiredReturn = _mapper.Map<ConfiguredProductDto>(configuredProduct);
+            return validationOutput;
+        }
+        
+        public ValidationOutput ClientGetByReference(string reference)
+        {
+            ValidationOutput validationOutput = _configuredProductDTOValidator.DTOReferenceIsValid(reference);
+            if (validationOutput.HasErrors())
+            {
+                return validationOutput;
+            }
+            if(!ExistsAndIsActive(reference))
+            {
+                validationOutput = new ValidationOutputNotFound();
+                validationOutput.AddError("Configured Product's reference", "There are no configured products with the given reference");
+                return validationOutput;
+            }
+            validationOutput.DesiredReturn = _mapper.Map<ConfiguredProductDto>(_configuredProductRepository.GetByReference(reference));
             return validationOutput;
         }
 

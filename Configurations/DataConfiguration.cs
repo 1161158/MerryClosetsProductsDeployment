@@ -67,26 +67,6 @@ namespace MerryClosets.Configurations
             services.AddTransient<IProductRepository, ProductRepository>();
             services.AddTransient<ICollectionRepository, CollectionRepository>();
             services.AddTransient<IConfiguredProductRepository, ConfiguredProductRepository>();
-            
-            services.AddTransient<CategoryDTOValidator>();
-            services.AddTransient<AlgorithmDTOValidator>();
-            services.AddTransient<CatalogDTOValidator>();
-            services.AddTransient<CollectionDTOValidator>();
-            services.AddTransient<ColorDTOValidator>();
-            services.AddTransient<ConfiguredProductDTOValidator>();
-            services.AddTransient<ContinuousValueDTOValidator>();
-            services.AddTransient<DimensionValuesDTOValidator>();
-            services.AddTransient<DiscreteValueDTOValidator>();
-            services.AddTransient<FinishDTOValidator>();
-            services.AddTransient<MaterialDTOValidator>();
-            services.AddTransient<PriceDTOValidator>();
-            services.AddTransient<ProductDTOValidator>();
-            services.AddTransient<RatioAlgorithmDTOValidator>();
-            services.AddTransient<SlotDefinitionDTOValidator>();
-            services.AddTransient<ValuesDTOValidator>();
-            services.AddTransient<PriceHistoryDTOValidator>();
-            services.AddTransient<SizePercentagePartAlgorithmDTOValidator>();
-            services.AddTransient<RatioAlgorithmDTOValidator>();
         }
     }
 }

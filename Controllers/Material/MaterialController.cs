@@ -38,7 +38,10 @@ namespace MerryClosets.Controllers.Material
         [HttpPost]
         public async Task<IActionResult> CreateMaterial([FromHeader(Name="Authorization")] string authorization, [FromBody] MaterialDto materialDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -81,7 +84,10 @@ namespace MerryClosets.Controllers.Material
         public async Task<IActionResult> AddColors([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<ColorDto> enumerableColorDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -125,7 +131,10 @@ namespace MerryClosets.Controllers.Material
         public async Task<IActionResult> AddFinishes([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<FinishDto> enumerableFinishDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -166,7 +175,10 @@ namespace MerryClosets.Controllers.Material
         public async Task<IActionResult> AddPriceDateItems([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<PriceHistoryDto> enumerablePriceHistory)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -208,7 +220,10 @@ namespace MerryClosets.Controllers.Material
         public async Task<IActionResult> AddPriceDateItems([FromHeader(Name="Authorization")] string authorization, [FromRoute] string materialReference, string finishReference,
             [FromBody] IEnumerable<PriceHistoryDto> enumerablePriceHistory)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -258,11 +273,14 @@ namespace MerryClosets.Controllers.Material
         [HttpGet]
         public async Task<IActionResult> GetAll([FromHeader(Name="Authorization")] string authorization)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
             }
+            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             IEnumerable<MaterialDto> list = _materialService.GetAll();
             _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Materials: {0}", EnumerableUtils.convert(list));
@@ -272,14 +290,25 @@ namespace MerryClosets.Controllers.Material
         [HttpGet("{reference}/colors", Name = "GetMaterialColors")]
         public async Task<IActionResult> GetMaterialColors([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            ValidationOutput validationOutput;
+            
+            if(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])) {
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _materialService.GetColors(reference);
+            }
+            else if(await _userValidationService.Validate(authorization.Split(" ")[1]))
             {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _materialService.GetColors(reference);
+            }else
+            {
+                return Unauthorized();
             }
             
-            _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting Colors By Reference: {0}", reference);
-            ValidationOutput validationOutput = _materialService.GetColors(reference);
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
@@ -313,11 +342,14 @@ namespace MerryClosets.Controllers.Material
         [HttpGet("{reference}", Name = "GetMaterial")]
         public async Task<IActionResult> GetMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
-            var userRef = "";
-            if (authorization != null)
-            {
-                userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
             }
+            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
             ValidationOutput validationOutput = _materialService.GetByReference(reference);
@@ -357,7 +389,10 @@ namespace MerryClosets.Controllers.Material
         [HttpPut("{reference}")]
         public async Task<IActionResult> UpdateMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference, [FromBody] MaterialDto materialDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -379,6 +414,11 @@ namespace MerryClosets.Controllers.Material
                         ((ValidationOutputNotFound) validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
                 }
+                if (validationOutput is ValidationOutputForbidden)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.UpdateForbidden, "Updating Failed: {0}", ((ValidationOutputForbidden)validationOutput).ToString());
+                    return new ForbiddenObjectResult(validationOutput.FoundErrors);
+                }
 
                 _logger.logCritical(userRef, LoggingEvents.UpdateInternalError,
                     "Type of validation output not recognized. Please contact your software provider.");
@@ -399,7 +439,10 @@ namespace MerryClosets.Controllers.Material
         [HttpDelete("{reference}")]
         public async Task<IActionResult> DeleteMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -438,7 +481,10 @@ namespace MerryClosets.Controllers.Material
         public async Task<IActionResult> DeleteColorsFromMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<ColorDto> enumerableColorDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -480,7 +526,10 @@ namespace MerryClosets.Controllers.Material
         public async Task<IActionResult> DeleteFinishesFromMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<FinishDto> enumerableFinishDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -522,7 +571,10 @@ namespace MerryClosets.Controllers.Material
         public async Task<IActionResult> DeletePriceHistoryFromMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference,
             [FromBody] IEnumerable<PriceHistoryDto> enumerablePriceHistoryDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
@@ -565,7 +617,10 @@ namespace MerryClosets.Controllers.Material
             [FromRoute] string finishReference,
             [FromBody] IEnumerable<PriceHistoryDto> enumerablePriceHistoryDto)
         {
-            if(!(await _userValidationService.validateContentManager(authorization.Split(" ")[1]))) {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))) {
                 return Unauthorized();
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);

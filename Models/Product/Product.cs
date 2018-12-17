@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MerryClosets.Models.Animation;
 using MerryClosets.Models.DTO;
 using MerryClosets.Models.Material;
 
@@ -46,6 +47,24 @@ namespace MerryClosets.Models.Product
          * Definitions that the slots this product may have, are required to follow.
          */
         public SlotDefinition SlotDefinition { get; set; }
+
+        public ModelGroup ModelGroup {get; set; }
+
+        public Product(string reference, string name, string description, string categoryReference, Price price,
+            List<Part> parts, List<ProductMaterial> productMaterialList, List<DimensionValues> dimensions,
+            SlotDefinition slotDef, ModelGroup modelGroup)
+        {
+            this.Reference = reference;
+            this.Name = name;
+            this.Description = description;
+            this.CategoryReference = categoryReference;
+            this.Price = price;
+            this.Parts = parts;
+            this.ProductMaterialList = productMaterialList;
+            this.Dimensions = dimensions;
+            this.SlotDefinition = slotDef;
+            this.ModelGroup = modelGroup;
+        }
 
         public Product(string reference, string name, string description, string categoryReference, Price price,
             List<Part> parts, List<ProductMaterial> productMaterialList, List<DimensionValues> dimensions,

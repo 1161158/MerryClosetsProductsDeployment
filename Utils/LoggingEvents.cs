@@ -45,6 +45,13 @@ public class LoggingEvents
     PostNotFound = 4043,
     UpdateNotFound = 4044,
     DeleteNotFound = 4045,
+        
+    //Resposta HTTP NotFound
+    GetItemForbidden = 4031,
+    GetAllForbidden = 4032,
+    PostForbidden = 4033,
+    UpdateForbidden = 4034,
+    DeleteForbidden= 4035, 
 
     //ERRORS
     //Internal server error

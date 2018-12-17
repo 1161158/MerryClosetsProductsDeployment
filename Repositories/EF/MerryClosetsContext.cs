@@ -5,6 +5,7 @@ using MerryClosets.Models.Material;
 using MerryClosets.Models.Restriction;
 using MerryClosets.Models.ConfiguredProduct;
 using MerryClosets.Models.Collection;
+using MerryClosets.Models.Animation;
 
 namespace MerryClosets.Repositories.EF
 {
@@ -32,6 +33,10 @@ namespace MerryClosets.Repositories.EF
         builder.Entity<SizePercentagePartAlgorithm>();
         builder.Entity<SizePartAlgorithm>();
         builder.Entity<RatioAlgorithm>();
+        builder.Entity<FrontalOpenAnimation>();
+        builder.Entity<LateralOpenAnimation>();
+        builder.Entity<SlidingLeftAnimation>();
+        builder.Entity<SlidingRightAnimation>();
 
 
         base.OnModelCreating(builder);

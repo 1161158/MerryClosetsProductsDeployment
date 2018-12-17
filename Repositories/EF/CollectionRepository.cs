@@ -21,5 +21,9 @@ namespace MerryClosets.Repositories
             .Include(c => c.ProductCollectionList)
             .FirstOrDefault(c => c.Reference == reference);
         }
+        public override List<Collection> List() {
+            return base.GetActiveQueryable()
+            .Include(c => c.ProductCollectionList).ToList();
+        }
     }
 }

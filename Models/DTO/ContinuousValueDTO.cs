@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using MerryClosets.Utils;
 
 namespace MerryClosets.Models.DTO
 {
@@ -8,10 +9,12 @@ namespace MerryClosets.Models.DTO
         public int MinValue { get; set; }
         public int MaxValue { get; set; }
 
+
         public ContinuousValueDto(int minValue, int maxValue)
         {
             this.MinValue = minValue;
             this.MaxValue = maxValue;
+            base.type = RestrictionName.CONTINUOUS_VALUE;
         }
 
         protected ContinuousValueDto() { }

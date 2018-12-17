@@ -25,14 +25,23 @@ namespace MerryClosets.Models.DTO.DTOValidators
         public override ValidationOutput DTOIsValidForRegister(CatalogDto consideredDto)
         {
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
-            if (!NameIsValid(consideredDto.Name))
+            if (consideredDto.Name != null)
             {
-                validationOutput.AddError("Name of catalog", "The name'" + consideredDto.Name + "' is not valid!");
+                if (!NameIsValid(consideredDto.Name))
+                {
+                    validationOutput.AddError("Name of catalog", "The name'" + consideredDto.Name + "' is not valid!");
+                }
             }
-            if (!DescriptionIsValid(consideredDto.Description))
+
+            if (consideredDto.Description != null)
             {
-                validationOutput.AddError("Description of catalog", "The description'" + consideredDto.Description + "' is not valid!");
+                if (!DescriptionIsValid(consideredDto.Description))
+                {
+                    validationOutput.AddError("Description of catalog",
+                        "The description'" + consideredDto.Description + "' is not valid!");
+                }
             }
+
             return validationOutput;
         }
 

@@ -9,5 +9,6 @@ namespace MerryClosets.Services.Interfaces
     {
         ValidationOutput AddVariousProductCollection(string reference, IEnumerable<ProductCollectionDto> enumerableProductCollectionDto);
         ValidationOutput DeleteVariousProductCollection(string reference, IEnumerable<ProductCollectionDto> enumerableProductCollectionDto);
+        ValidationOutput GetAllProductCollection(string reference);
     }
 }

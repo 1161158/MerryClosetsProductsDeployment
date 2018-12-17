@@ -1,3 +1,5 @@
+using MerryClosets.Utils;
+
 namespace MerryClosets.Models.DTO
 {
     public class RatioAlgorithmDto : DimensionAlgorithmDto
@@ -13,6 +15,7 @@ namespace MerryClosets.Models.DTO
             this.SecondValueDesc = secondValueDesc;
             this.Operator = op;
             this.Ratio = ratio;
+            base.type = RestrictionName.RATIO_ALGORITHM;
         }
         protected RatioAlgorithmDto(){}
     }

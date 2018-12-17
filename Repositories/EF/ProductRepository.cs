@@ -23,6 +23,7 @@ namespace MerryClosets.Repositories.EF
             .Include(p => p.Dimensions).ThenInclude(sizes => sizes.PossibleDepths)
             .Include(p => p.Dimensions).ThenInclude(sizes => sizes.Algorithms)
             .Include(p => p.Price)
+            .Include(p => p.ModelGroup).ThenInclude(modelGroup => modelGroup.Components).ThenInclude(component => component.Animation)
             .FirstOrDefault();
 
             if (product == null)

@@ -19,6 +19,8 @@ namespace MerryClosets.Models.Category
          * Reference of the parent category. Can be null, indicating that it's a root category.
          */
         public string ParentCategoryReference { get; set; }
+        
+        public bool IsExternal { get; set; }
 
         public Category(string name, string description, string reference, string parentCategoryReference)
         {
@@ -26,6 +28,25 @@ namespace MerryClosets.Models.Category
             this.Description = description;
             this.Reference = reference;
             this.ParentCategoryReference = parentCategoryReference;
+            this.IsExternal = false;
+        }
+        
+        public Category(string name, string description, string reference, string parentCategoryReference, bool isExternal)
+        {
+            this.Name = name;
+            this.Description = description;
+            this.Reference = reference;
+            this.ParentCategoryReference = parentCategoryReference;
+            this.IsExternal = isExternal;
+        }
+        
+        public Category(string name, string description, string reference, bool isExternal)
+        {
+            this.Name = name;
+            this.Description = description;
+            this.Reference = reference;
+            this.ParentCategoryReference = null;
+            this.IsExternal = isExternal;
         }
 
         public Category(string name, string description, string reference)
@@ -34,6 +55,7 @@ namespace MerryClosets.Models.Category
             this.Description = description;
             this.Reference = reference;
             this.ParentCategoryReference = null;
+            this.IsExternal = false;
         }
 
         /**

@@ -22,6 +22,22 @@ namespace MerryClosets.Models.DTO
 
         public SlotDefinitionDto SlotDefinition { get; set; }
 
+        public ModelGroupDto ModelGroup { get; set; }
+
+        public ProductDto(string reference, string name, string description, string categoryReference, PriceDto price, List<PartDto> parts, List<ProductMaterialDto> productMaterialList, List<DimensionValuesDto> dimensions, SlotDefinitionDto slotDefinition, ModelGroupDto modelGroup)
+        {
+            this.Reference = reference;
+            this.Name = name;
+            this.Description = description;
+            this.CategoryReference = categoryReference;
+            this.Price = price;
+            this.Parts = parts;
+            this.ProductMaterialList = productMaterialList;
+            this.Dimensions = dimensions;
+            this.SlotDefinition = slotDefinition;
+            this.ModelGroup = modelGroup;
+        }
+
         public ProductDto(string reference, string name, string description, string categoryReference, PriceDto price, List<PartDto> parts, List<ProductMaterialDto> productMaterialList, List<DimensionValuesDto> dimensions, SlotDefinitionDto slotDefinition)
         {
             this.Reference = reference;

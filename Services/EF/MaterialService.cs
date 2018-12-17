@@ -10,6 +10,7 @@ using MerryClosets.Models.DTO.DTOValidators;
 using MerryClosets.Models.Material;
 using MerryClosets.Repositories.Interfaces;
 using MerryClosets.Services.Interfaces;
+using MerryClosets.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace MerryClosets.Services.EF
@@ -46,6 +47,17 @@ namespace MerryClosets.Services.EF
             return material != null;
         }
 
+        private bool ExistsAndIsActive(string reference)
+        {
+            var  material = _materialRepository.GetByReference(reference);
+            if (material != null && material.IsActive)
+            {
+                return true;
+            }
+
+            return false;
+        }
+        
         /**
          * Method that, if the Price attribute in the passed material is different from null, will add that price to the history of the received material.
          */
@@ -467,6 +479,31 @@ namespace MerryClosets.Services.EF
             validationOutput.DesiredReturn = _mapper.Map<MaterialDto>(materialToReturn);
             return validationOutput;
         }
+        
+        /**
+         * Method that will return either the material in the form of a DTO that has the passed reference OR all the errors found when trying to do so.
+         * 
+         * Validations performed:
+         * 1. Validation of the passed material's reference (database);
+         * 
+         * This method can return a soft-deleted material.
+         */
+        public ValidationOutput ClientGetByReference(string reference)
+        {
+            //1.
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!ExistsAndIsActive(reference))
+            {
+                validationOutput.AddError("Reference of material",
+                    "No material with the reference '" + reference + "' exists in the system.");
+                return validationOutput;
+            }
+
+            Material materialToReturn = _materialRepository.GetByReference(reference);
+
+            validationOutput.DesiredReturn = _mapper.Map<MaterialDto>(materialToReturn);
+            return validationOutput;
+        }
 
         /**
          * Method that will return all materials present in the system, each in the form of a DTO OR all the errors found when trying to do so.
@@ -530,6 +567,13 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
+            validationOutput = new ValidationOutputForbidden();
+            if (dto.Reference != null)
+            {
+                validationOutput.AddError("Reference of material", "It's not allowed to update reference.");
+                return validationOutput;
+            }
+            
             //2.
             validationOutput = _materialDTOValidator.DTOIsValidForUpdate(dto);
             if (validationOutput.HasErrors())
@@ -539,8 +583,16 @@ namespace MerryClosets.Services.EF
 
             Material materialToUpdate = _materialRepository.GetByReference(reference);
 
-            materialToUpdate.Name = dto.Name;
-            materialToUpdate.Description = dto.Description;
+            if (dto.Name != null)
+            {
+                materialToUpdate.Name = dto.Name;
+            }
+
+            if (dto.Description != null)
+            {
+                materialToUpdate.Description = dto.Description;
+            }
+            
             /*if (dto.Price != null)
             {
                 materialToUpdate.AddPriceToHistory(new PriceHistory(_mapper.Map<Price>(dto.Price)));

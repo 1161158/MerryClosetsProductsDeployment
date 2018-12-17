@@ -1,3 +1,5 @@
+using MerryClosets.Utils;
+
 namespace MerryClosets.Models.DTO
 {
     public class SizePercentagePartAlgorithmDto : PartAlgorithmDto
@@ -10,6 +12,7 @@ namespace MerryClosets.Models.DTO
             this.SizeType = sizeType;
             this.Min = min;
             this.Max = max;
+            base.type = RestrictionName.SIZE_PERCENTAGE_PART_ALGORITHM;
         }
         protected SizePercentagePartAlgorithmDto() {}
     }

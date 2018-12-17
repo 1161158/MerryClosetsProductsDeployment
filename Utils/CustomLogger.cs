@@ -40,37 +40,31 @@ namespace MerryClosets.Utils
 
         public void logInformation(string userRef, EventId logId, string message, params object[] args)
         {
-            _logger.LogInformation(logId, message, args); //write logger to the console
             writeLogToFile(userRef, logId, message, LogLevel.Information, args);
         }
 
         public void logDebug(string userRef, EventId logId, string message, params object[] args)
         {
-            _logger.LogDebug(logId, message, args); //write logger to the console
             writeLogToFile(userRef, logId, message, LogLevel.Debug, args);
         }
 
         public void logError(string userRef, EventId logId, string message, params object[] args)
         {
-            _logger.LogError(logId, message, args); //write logger to the console
             writeLogToFile(userRef, logId, message, LogLevel.Error, args);
         }
 
         public void logTrace(string userRef, EventId logId, string message, params object[] args)
         {
-            _logger.LogTrace(logId, message, args); //write logger to the console
             writeLogToFile(userRef, logId, message, LogLevel.Trace, args);
         }
 
         public void logWarning(string userRef, EventId logId, string message, params object[] args)
         {
-            _logger.LogWarning(logId, message, args); //write logger to the console
             writeLogToFile(userRef, logId, message, LogLevel.Warning, args);
         }
 
         public void logCritical(string userRef, EventId logId, string message, params object[] args)
         {
-            _logger.LogCritical(logId, message, args); //write logger to the console
             writeLogToFile(userRef, logId, message, LogLevel.Critical, args);
         }
     }

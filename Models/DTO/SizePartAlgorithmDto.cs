@@ -1,3 +1,5 @@
+using MerryClosets.Utils;
+
 namespace MerryClosets.Models.DTO
 {
     public class SizePartAlgorithmDto : PartAlgorithmDto
@@ -5,6 +7,7 @@ namespace MerryClosets.Models.DTO
 
         public SizePartAlgorithmDto() {
             //This algorithm is NOT implemented yet
+            base.type = RestrictionName.SIZE_PART_ALGORITHM;
         }
     }
 }
