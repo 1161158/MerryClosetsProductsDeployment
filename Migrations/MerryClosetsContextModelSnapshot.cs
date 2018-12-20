@@ -19,6 +19,58 @@ namespace MerryClosets.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+            modelBuilder.Entity("MerryClosets.Models.Animation.Animation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired();
+
+                    b.Property<string>("type");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Animation");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Animation");
+                });
+
+            modelBuilder.Entity("MerryClosets.Models.Animation.Component", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<long?>("AnimationId");
+
+                    b.Property<long?>("ModelGroupId");
+
+                    b.Property<string>("Name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnimationId");
+
+                    b.HasIndex("ModelGroupId");
+
+                    b.ToTable("Component");
+                });
+
+            modelBuilder.Entity("MerryClosets.Models.Animation.ModelGroup", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("RelativeURL");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ModelGroup");
+                });
+
             modelBuilder.Entity("MerryClosets.Models.Category.Category", b =>
                 {
                     b.Property<long>("Id")
@@ -28,6 +80,8 @@ namespace MerryClosets.Migrations
                     b.Property<string>("Description");
 
                     b.Property<bool>("IsActive");
+
+                    b.Property<bool>("IsExternal");
 
                     b.Property<string>("Name");
 
@@ -63,6 +117,27 @@ namespace MerryClosets.Migrations
                     b.ToTable("Catalogs");
                 });
 
+            modelBuilder.Entity("MerryClosets.Models.Collection.CatalogProductCollection", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<long?>("CatalogId");
+
+                    b.Property<string>("CatalogReference");
+
+                    b.Property<long?>("ProductCollectionId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CatalogId");
+
+                    b.HasIndex("ProductCollectionId");
+
+                    b.ToTable("CatalogProductCollection");
+                });
+
             modelBuilder.Entity("MerryClosets.Models.Collection.Collection", b =>
                 {
                     b.Property<long>("Id")
@@ -96,32 +171,11 @@ namespace MerryClosets.Migrations
 
                     b.Property<string>("ConfiguredProductReference");
 
-                    b.Property<long?>("ProductCollectionCatalogId");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CollectionId");
 
-                    b.HasIndex("ProductCollectionCatalogId");
-
                     b.ToTable("ProductCollection");
-                });
-
-            modelBuilder.Entity("MerryClosets.Models.Collection.ProductCollectionCatalog", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<long?>("CatalogId");
-
-                    b.Property<string>("CatalogReference");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CatalogId");
-
-                    b.ToTable("ProductCollectionCatalog");
                 });
 
             modelBuilder.Entity("MerryClosets.Models.ConfiguredProduct.ConfiguredDimension", b =>
@@ -233,11 +287,13 @@ namespace MerryClosets.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<string>("Description");
+
+                    b.Property<string>("HexCode");
+
                     b.Property<long?>("MaterialId");
 
                     b.Property<string>("Name");
-
-                    b.Property<string>("Reference");
 
                     b.HasKey("Id");
 
@@ -254,19 +310,19 @@ namespace MerryClosets.Migrations
 
                     b.Property<string>("Description");
 
+                    b.Property<bool>("IsActive");
+
                     b.Property<long?>("MaterialId");
 
                     b.Property<string>("Name");
 
-                    b.Property<long?>("PriceId");
-
                     b.Property<string>("Reference");
+
+                    b.Property<long>("Version");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MaterialId");
-
-                    b.HasIndex("PriceId");
 
                     b.ToTable("Finish");
                 });
@@ -283,36 +339,13 @@ namespace MerryClosets.Migrations
 
                     b.Property<string>("Name");
 
-                    b.Property<long?>("PriceId");
-
                     b.Property<string>("Reference");
 
                     b.Property<long>("Version");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PriceId");
-
                     b.ToTable("Materials");
-                });
-
-            modelBuilder.Entity("MerryClosets.Models.Material.MaterialProduct", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("MaterialReference");
-
-                    b.Property<long?>("ProductId");
-
-                    b.Property<string>("ProductReference");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("MaterialProduct");
                 });
 
             modelBuilder.Entity("MerryClosets.Models.Product.DimensionValues", b =>
@@ -359,6 +392,8 @@ namespace MerryClosets.Migrations
 
                     b.Property<bool>("IsActive");
 
+                    b.Property<long?>("ModelGroupId");
+
                     b.Property<string>("Name");
 
                     b.Property<long?>("PriceId");
@@ -371,11 +406,32 @@ namespace MerryClosets.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ModelGroupId");
+
                     b.HasIndex("PriceId");
 
                     b.HasIndex("SlotDefinitionId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("MerryClosets.Models.Product.ProductMaterial", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("MaterialReference");
+
+                    b.Property<long?>("ProductId");
+
+                    b.Property<string>("ProductReference");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductMaterial");
                 });
 
             modelBuilder.Entity("MerryClosets.Models.Product.Values", b =>
@@ -432,11 +488,11 @@ namespace MerryClosets.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<long?>("MaterialProductId");
+                    b.Property<long?>("ProductMaterialId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MaterialProductId");
+                    b.HasIndex("ProductMaterialId");
 
                     b.ToTable("MaterialAlgorithm");
                 });
@@ -474,6 +530,31 @@ namespace MerryClosets.Migrations
                     b.ToTable("Price");
                 });
 
+            modelBuilder.Entity("PriceHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("Date");
+
+                    b.Property<long?>("FinishId");
+
+                    b.Property<long?>("MaterialId");
+
+                    b.Property<long?>("PriceId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FinishId");
+
+                    b.HasIndex("MaterialId");
+
+                    b.HasIndex("PriceId");
+
+                    b.ToTable("PriceHistory");
+                });
+
             modelBuilder.Entity("SlotDefinition", b =>
                 {
                     b.Property<long>("Id")
@@ -484,9 +565,51 @@ namespace MerryClosets.Migrations
 
                     b.Property<int>("MinSize");
 
+                    b.Property<int>("RecSize");
+
                     b.HasKey("Id");
 
                     b.ToTable("SlotDefinition");
+                });
+
+            modelBuilder.Entity("MerryClosets.Models.Animation.FrontalOpenAnimation", b =>
+                {
+                    b.HasBaseType("MerryClosets.Models.Animation.Animation");
+
+
+                    b.ToTable("FrontalOpenAnimation");
+
+                    b.HasDiscriminator().HasValue("FrontalOpenAnimation");
+                });
+
+            modelBuilder.Entity("MerryClosets.Models.Animation.LateralOpenAnimation", b =>
+                {
+                    b.HasBaseType("MerryClosets.Models.Animation.Animation");
+
+
+                    b.ToTable("LateralOpenAnimation");
+
+                    b.HasDiscriminator().HasValue("LateralOpenAnimation");
+                });
+
+            modelBuilder.Entity("MerryClosets.Models.Animation.SlidingLeftAnimation", b =>
+                {
+                    b.HasBaseType("MerryClosets.Models.Animation.Animation");
+
+
+                    b.ToTable("SlidingLeftAnimation");
+
+                    b.HasDiscriminator().HasValue("SlidingLeftAnimation");
+                });
+
+            modelBuilder.Entity("MerryClosets.Models.Animation.SlidingRightAnimation", b =>
+                {
+                    b.HasBaseType("MerryClosets.Models.Animation.Animation");
+
+
+                    b.ToTable("SlidingRightAnimation");
+
+                    b.HasDiscriminator().HasValue("SlidingRightAnimation");
                 });
 
             modelBuilder.Entity("MerryClosets.Models.Product.ContinuousValue", b =>
@@ -550,32 +673,58 @@ namespace MerryClosets.Migrations
                     b.HasDiscriminator().HasValue("MaterialPartAlgorithm");
                 });
 
+            modelBuilder.Entity("MerryClosets.Models.Restriction.SizePartAlgorithm", b =>
+                {
+                    b.HasBaseType("MerryClosets.Models.Restriction.PartAlgorithm");
+
+
+                    b.ToTable("SizePartAlgorithm");
+
+                    b.HasDiscriminator().HasValue("SizePartAlgorithm");
+                });
+
             modelBuilder.Entity("MerryClosets.Models.Restriction.SizePercentagePartAlgorithm", b =>
                 {
                     b.HasBaseType("MerryClosets.Models.Restriction.PartAlgorithm");
 
+                    b.Property<int>("Max");
+
+                    b.Property<int>("Min");
+
+                    b.Property<string>("SizeType");
 
                     b.ToTable("SizePercentagePartAlgorithm");
 
                     b.HasDiscriminator().HasValue("SizePercentagePartAlgorithm");
                 });
 
+            modelBuilder.Entity("MerryClosets.Models.Animation.Component", b =>
+                {
+                    b.HasOne("MerryClosets.Models.Animation.Animation", "Animation")
+                        .WithMany()
+                        .HasForeignKey("AnimationId");
+
+                    b.HasOne("MerryClosets.Models.Animation.ModelGroup")
+                        .WithMany("Components")
+                        .HasForeignKey("ModelGroupId");
+                });
+
+            modelBuilder.Entity("MerryClosets.Models.Collection.CatalogProductCollection", b =>
+                {
+                    b.HasOne("MerryClosets.Models.Collection.Catalog")
+                        .WithMany("CatalogProductCollectionList")
+                        .HasForeignKey("CatalogId");
+
+                    b.HasOne("MerryClosets.Models.Collection.ProductCollection", "ProductCollection")
+                        .WithMany()
+                        .HasForeignKey("ProductCollectionId");
+                });
+
             modelBuilder.Entity("MerryClosets.Models.Collection.ProductCollection", b =>
                 {
                     b.HasOne("MerryClosets.Models.Collection.Collection")
-                        .WithMany("ProductCollection")
+                        .WithMany("ProductCollectionList")
                         .HasForeignKey("CollectionId");
-
-                    b.HasOne("MerryClosets.Models.Collection.ProductCollectionCatalog")
-                        .WithMany("Products")
-                        .HasForeignKey("ProductCollectionCatalogId");
-                });
-
-            modelBuilder.Entity("MerryClosets.Models.Collection.ProductCollectionCatalog", b =>
-                {
-                    b.HasOne("MerryClosets.Models.Collection.Catalog")
-                        .WithMany("Collections")
-                        .HasForeignKey("CatalogId");
                 });
 
             modelBuilder.Entity("MerryClosets.Models.ConfiguredProduct.ConfiguredPart", b =>
@@ -619,24 +768,6 @@ namespace MerryClosets.Migrations
                     b.HasOne("MerryClosets.Models.Material.Material")
                         .WithMany("Finishes")
                         .HasForeignKey("MaterialId");
-
-                    b.HasOne("Price", "Price")
-                        .WithMany()
-                        .HasForeignKey("PriceId");
-                });
-
-            modelBuilder.Entity("MerryClosets.Models.Material.Material", b =>
-                {
-                    b.HasOne("Price", "Price")
-                        .WithMany()
-                        .HasForeignKey("PriceId");
-                });
-
-            modelBuilder.Entity("MerryClosets.Models.Material.MaterialProduct", b =>
-                {
-                    b.HasOne("MerryClosets.Models.Product.Product")
-                        .WithMany("MaterialsOfProduct")
-                        .HasForeignKey("ProductId");
                 });
 
             modelBuilder.Entity("MerryClosets.Models.Product.DimensionValues", b =>
@@ -655,6 +786,10 @@ namespace MerryClosets.Migrations
 
             modelBuilder.Entity("MerryClosets.Models.Product.Product", b =>
                 {
+                    b.HasOne("MerryClosets.Models.Animation.ModelGroup", "ModelGroup")
+                        .WithMany()
+                        .HasForeignKey("ModelGroupId");
+
                     b.HasOne("Price", "Price")
                         .WithMany()
                         .HasForeignKey("PriceId");
@@ -662,6 +797,13 @@ namespace MerryClosets.Migrations
                     b.HasOne("SlotDefinition", "SlotDefinition")
                         .WithMany()
                         .HasForeignKey("SlotDefinitionId");
+                });
+
+            modelBuilder.Entity("MerryClosets.Models.Product.ProductMaterial", b =>
+                {
+                    b.HasOne("MerryClosets.Models.Product.Product")
+                        .WithMany("ProductMaterialList")
+                        .HasForeignKey("ProductId");
                 });
 
             modelBuilder.Entity("MerryClosets.Models.Product.Values", b =>
@@ -682,22 +824,37 @@ namespace MerryClosets.Migrations
             modelBuilder.Entity("MerryClosets.Models.Restriction.DimensionAlgorithm", b =>
                 {
                     b.HasOne("MerryClosets.Models.Product.DimensionValues")
-                        .WithMany("Restrictions")
+                        .WithMany("Algorithms")
                         .HasForeignKey("DimensionValuesId");
                 });
 
             modelBuilder.Entity("MerryClosets.Models.Restriction.MaterialAlgorithm", b =>
                 {
-                    b.HasOne("MerryClosets.Models.Material.MaterialProduct")
-                        .WithMany("Restrictions")
-                        .HasForeignKey("MaterialProductId");
+                    b.HasOne("MerryClosets.Models.Product.ProductMaterial")
+                        .WithMany("Algorithms")
+                        .HasForeignKey("ProductMaterialId");
                 });
 
             modelBuilder.Entity("MerryClosets.Models.Restriction.PartAlgorithm", b =>
                 {
                     b.HasOne("MerryClosets.Models.Product.Part")
-                        .WithMany("Restrictions")
+                        .WithMany("Algorithms")
                         .HasForeignKey("PartId");
+                });
+
+            modelBuilder.Entity("PriceHistory", b =>
+                {
+                    b.HasOne("MerryClosets.Models.Material.Finish")
+                        .WithMany("PriceHistory")
+                        .HasForeignKey("FinishId");
+
+                    b.HasOne("MerryClosets.Models.Material.Material")
+                        .WithMany("PriceHistory")
+                        .HasForeignKey("MaterialId");
+
+                    b.HasOne("Price", "Price")
+                        .WithMany()
+                        .HasForeignKey("PriceId");
                 });
 #pragma warning restore 612, 618
         }
