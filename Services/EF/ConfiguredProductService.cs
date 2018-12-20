@@ -12,6 +12,7 @@ using MerryClosets.Models.Product;
 using MerryClosets.Models.Restriction;
 using MerryClosets.Repositories.Interfaces;
 using MerryClosets.Services.Interfaces;
+using Microsoft.IdentityModel.Xml;
 
 namespace MerryClosets.Services.EF
 {
@@ -25,7 +26,7 @@ namespace MerryClosets.Services.EF
         private readonly ICategoryRepository _categoryRepository;
 
         private readonly IProductService _productService;
-        
+
         private readonly ConfiguredProductDTOValidator _configuredProductDTOValidator;
 
         public ConfiguredProductService(IMapper mapper, IProductService productService, IConfiguredProductRepository configuredProductRepository, IProductRepository productRepository, IMaterialRepository materialRepository, ICategoryRepository categoryRepository, ConfiguredProductDTOValidator configuredProductDTOValidator)
@@ -41,6 +42,11 @@ namespace MerryClosets.Services.EF
 
         private void ValidateSlotDefinition(Product product, ChildConfiguredProductDto configuredDto, ValidationOutput validationOutput)
         {
+            Category category = _categoryRepository.GetByReference(product.CategoryReference);
+            if (category.IsExternal && configuredDto.SlotReference == null)
+            {
+                return;
+            }
             if (product.SlotDefinition != null)
             {
                 if (configuredDto.ConfiguredSlots == null || configuredDto.ConfiguredSlots.Count < 1)
@@ -91,6 +97,58 @@ namespace MerryClosets.Services.EF
             }
         }
 
+        private bool SlideDoorFits(ConfiguredProductDto childDto, ConfiguredProduct parent)
+        {
+            var sum = 0;
+            foreach (var part in parent.Parts)
+            {
+                ConfiguredProduct configuredProductPart =
+                    _configuredProductRepository.GetByReference(part.ConfiguredChildReference);
+                Product productPart = _productRepository.GetByReference(configuredProductPart.ProductReference);
+                Category category = _categoryRepository.GetByReference(productPart.CategoryReference);
+                if (category.IsExternal)
+                {
+                    sum += configuredProductPart.ConfiguredDimension.Width;
+                }
+            }
+
+            if (parent.ConfiguredDimension.Width - sum >= childDto.ConfiguredDimension.Width)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool SlotDoorFits(string slotReference, ConfiguredProductDto childDto, ConfiguredProduct parent)
+        {
+            var sum = 0;
+            foreach (var part in parent.Parts)
+            {
+                if (part.ChosenSlotReference == slotReference)
+                {
+                    ConfiguredProduct configuredProductPart =
+                        _configuredProductRepository.GetByReference(part.ConfiguredChildReference);
+                    Product productPart = _productRepository.GetByReference(configuredProductPart.ProductReference);
+                    Category category = _categoryRepository.GetByReference(productPart.CategoryReference);
+                    if (category.IsExternal)
+                    {
+                        sum += configuredProductPart.ConfiguredDimension.Width;
+                    }
+                }
+            }
+
+            foreach (var slot in parent.ConfiguredSlots)
+            {
+                if (slot.Reference == slotReference)
+                {
+                    return slot.Size - sum >= childDto.ConfiguredDimension.Width;
+                }
+            }
+
+            return parent.ConfiguredDimension.Width - sum >= childDto.ConfiguredDimension.Width;
+        }
+
         private void ChildrenFits(string slotReference, ConfiguredProduct parent, ConfiguredProductDto childDto, ValidationOutput validationOutput)
         {
             Product product = _productRepository.GetByReference(childDto.ProductReference);
@@ -101,11 +159,33 @@ namespace MerryClosets.Services.EF
                 {
                     validationOutput.AddError("Configured Product's height", "Parent Configured Product's height is insufficient!");
                 }
+                if (!ChildrenWidthFits(slotReference, parent, childDto))
+                {
+                    validationOutput.AddError("Configured Product's width", "Parent Configured Product's width is insufficient!");
+                }
             }
-            
-            if (!ChildrenWidthFits(slotReference, parent, childDto))
+            else if (category.IsExternal)
             {
-                validationOutput.AddError("Configured Product's width", "Parent Configured Product's width is insufficient!");
+                if (!(parent.ConfiguredDimension.Height >= childDto.ConfiguredDimension.Height))
+                {
+                    validationOutput.AddError("Configured Product's height", "Parent Configured Product's height is insufficient!");
+                }
+
+                if (slotReference != null)
+                {
+                    if (!(SlotDoorFits(slotReference, childDto, parent)))
+                    {
+                        validationOutput.AddError("Configured Product's width",
+                            "Parent Configured Product's width is insufficient!");
+                    }
+                }
+                else
+                {
+                    if (!(SlideDoorFits(childDto, parent)))
+                    {
+                        validationOutput.AddError("Configured Product's width", "Parent Configured Product's width is insufficient!");
+                    }
+                }
             }
             if (!ChildrenDepthFits(slotReference, parent, childDto))
             {
@@ -317,11 +397,14 @@ namespace MerryClosets.Services.EF
         private ValidationOutput DataExists(ChildConfiguredProductDto dto)
         {
             ValidationOutput validationOutput = new ValidationOutputNotFound();
-            if (_productRepository.GetByReference(dto.ProductReference) == null)
+            Product product = _productRepository.GetByReference(dto.ProductReference);
+            if (product == null)
             {
+
                 validationOutput.AddError("Origin Product", "There are no product with the given reference!");
                 return validationOutput;
             }
+            Category category = _categoryRepository.GetByReference(product.CategoryReference);
             if (_materialRepository.GetByReference(dto.ConfiguredMaterial.OriginMaterialReference) == null)
             {
                 validationOutput.AddError("Origin Material", "There are no material with the given reference!");
@@ -337,20 +420,38 @@ namespace MerryClosets.Services.EF
                 }
                 ConfiguredProduct cpd = _configuredProductRepository.GetByReference(dto.ParentReference);
                 validationOutput = new ValidationOutputBadRequest();
-                foreach (var slot in cpd.ConfiguredSlots)
+                if (category.IsExternal && dto.SlotReference == null)
                 {
-                    if (string.Equals(slot.Reference, dto.SlotReference, StringComparison.Ordinal))
+                    var parentProduct = _productRepository.GetByReference(cpd.ProductReference);
+                    foreach (var part in parentProduct.Parts)
                     {
-                        var parentProduct = _productRepository.GetByReference(cpd.ProductReference);
-                        foreach (var part in parentProduct.Parts)
+                        if (string.Equals(part.ProductReference, dto.ProductReference))
                         {
-                            if (string.Equals(part.ProductReference, dto.ProductReference))
-                            {
-                                return validationOutput;
-                            }
+                            return validationOutput;
                         }
-                        validationOutput.AddError("Product Reference", "Parent Product does not support this product as child!");
-                        return validationOutput;
+                    }
+                    validationOutput.AddError("Product Reference", "Parent Product does not support this product as child!");
+                    return validationOutput;
+                }
+                if ((category.IsExternal && dto.SlotReference != null) || (!category.IsExternal))
+                {
+                    foreach (var slot in cpd.ConfiguredSlots)
+                    {
+                        if (string.Equals(slot.Reference, dto.SlotReference, StringComparison.Ordinal))
+                        {
+                            var parentProduct = _productRepository.GetByReference(cpd.ProductReference);
+                            foreach (var part in parentProduct.Parts)
+                            {
+                                if (string.Equals(part.ProductReference, dto.ProductReference))
+                                {
+                                    return validationOutput;
+                                }
+                            }
+
+                            validationOutput.AddError("Product Reference",
+                                "Parent Product does not support this product as child!");
+                            return validationOutput;
+                        }
                     }
                 }
                 validationOutput.AddError("Slot Reference", "The selected slot reference does not exists in parent configured product");
@@ -381,7 +482,7 @@ namespace MerryClosets.Services.EF
             var lastRef = _configuredProductRepository.ConfiguredProductsLenght();
             lastRef++;
             configuredDto.Reference = "confPro" + Convert.ToString(lastRef);
-            
+
             //1.
             validationOutput = _configuredProductDTOValidator.DTOReferenceIsValid(configuredDto.Reference);
             if (validationOutput.HasErrors())
@@ -450,7 +551,7 @@ namespace MerryClosets.Services.EF
             var totalArea = (2 * (height * depth)) + (2 * (width * depth)) + (height * width);
             return (totalArea * (materialPrice.Value + finishPrice.Value) + productPrice.Value);
         }
-        
+
         private bool ExistsAndIsActive(string reference)
         {
             var configuredProduct = _configuredProductRepository.GetByReference(reference);
@@ -479,7 +580,7 @@ namespace MerryClosets.Services.EF
             validationOutput.DesiredReturn = _mapper.Map<ConfiguredProductDto>(configuredProduct);
             return validationOutput;
         }
-        
+
         public ValidationOutput ClientGetByReference(string reference)
         {
             ValidationOutput validationOutput = _configuredProductDTOValidator.DTOReferenceIsValid(reference);
@@ -487,7 +588,7 @@ namespace MerryClosets.Services.EF
             {
                 return validationOutput;
             }
-            if(!ExistsAndIsActive(reference))
+            if (!ExistsAndIsActive(reference))
             {
                 validationOutput = new ValidationOutputNotFound();
                 validationOutput.AddError("Configured Product's reference", "There are no configured products with the given reference");
@@ -536,7 +637,7 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
-            List<ProductDto> productsDto = (List<ProductDto>) _productService
+            List<ProductDto> productsDto = (List<ProductDto>)_productService
                 .GetPartProductsAvailableToProduct(configuredProduct.ProductReference).DesiredReturn;
             List<Product> productsAvailable = new List<Product>();
             foreach (var dto in productsDto)
@@ -551,7 +652,7 @@ namespace MerryClosets.Services.EF
                 {
                     productsAvailableFinal.Add(_mapper.Map<ProductDto>(product));
                 }
-                
+
             }
 
             validationOutput.DesiredReturn = productsAvailableFinal;
@@ -566,7 +667,7 @@ namespace MerryClosets.Services.EF
                 bool validateHeight = Validate(dimensions.PossibleHeights, configuredDimension.Height);
                 bool validateWidth = Validate(dimensions.PossibleWidths, configuredDimension.Width);
                 bool validateDepth = Validate(dimensions.PossibleDepths, configuredDimension.Depth);
-                
+
                 if (validateDepth && validateHeight && validateWidth)
                 {
                     return true;
@@ -574,7 +675,7 @@ namespace MerryClosets.Services.EF
             }
             return false;
         }
-        
+
         private bool Validate(List<Values> list, int dimension)
         {
             foreach (var value in list)
@@ -586,7 +687,8 @@ namespace MerryClosets.Services.EF
                     {
                         return true;
                     }
-                }else if (value is ContinuousValue)
+                }
+                else if (value is ContinuousValue)
                 {
                     var newValue = (ContinuousValue)value;
                     if (dimension >= newValue.MinValue && dimension >= newValue.MaxValue)
@@ -597,7 +699,7 @@ namespace MerryClosets.Services.EF
             }
             return false;
         }
-        
+
         private void GetAllByReference(string reference, ProductOrderDto product)
         {
             var child = _mapper.Map<ProductOrderDto>(_configuredProductRepository.GetByReference(reference));

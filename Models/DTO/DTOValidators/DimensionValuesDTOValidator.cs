@@ -20,6 +20,12 @@ namespace MerryClosets.Models.DTO.DTOValidators
         {
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
 
+            if (string.IsNullOrEmpty(consideredDto.Reference))
+            {
+                validationOutput.AddError("Dimension's Reference", "There is no reference.");
+                return validationOutput;
+            }
+            
             //================== PossibleHeights attribute ==================
             if (consideredDto.PossibleHeights == null || consideredDto.PossibleHeights.Count <= 0)
             {
@@ -27,6 +33,38 @@ namespace MerryClosets.Models.DTO.DTOValidators
                 return validationOutput;
             }
 
+            validationOutput = this.PossibleHeightsIsValid(consideredDto);
+            if (validationOutput.HasErrors())
+            {
+                return validationOutput;
+            }
+
+            //================== PossibleWidths attribute ==================
+            if (consideredDto.PossibleWidths == null || consideredDto.PossibleWidths.Count <= 0)
+            {
+                validationOutput.AddError("Dimension's widths", "There are no widths.");
+                return validationOutput;
+            }
+
+            validationOutput = this.PossibleWidthsIsValid(consideredDto);
+            if (validationOutput.HasErrors())
+            {
+                return validationOutput;
+            }
+
+            //================== PossibleDepths attribute ==================
+            if (consideredDto.PossibleDepths == null || consideredDto.PossibleDepths.Count <= 0)
+            {
+                validationOutput.AddError("Dimension's depths", "There are no depths");
+                return validationOutput;
+            }
+            validationOutput = this.PossibleDepthsIsValid(consideredDto);
+
+            return validationOutput;
+        }
+        public ValidationOutput PossibleHeightsIsValid(DimensionValuesDto consideredDto)
+        {
+            ValidationOutput validationOutput = new ValidationOutputBadRequest();
             List<ValuesDto> possibleHeights = new List<ValuesDto>();
             foreach (var setOfValuesDto in consideredDto.PossibleHeights)
             {
@@ -54,18 +92,12 @@ namespace MerryClosets.Models.DTO.DTOValidators
 
                 possibleHeights.Add(setOfValuesDto);
             }
-            if (validationOutput.HasErrors())
-            {
-                return validationOutput;
-            }
+            return validationOutput;
+        }
 
-            //================== PossibleWidths attribute ==================
-            if (consideredDto.PossibleWidths == null || consideredDto.PossibleWidths.Count <= 0)
-            {
-                validationOutput.AddError("Dimension's widths", "There are no widths.");
-                return validationOutput;
-            }
-
+        public ValidationOutput PossibleWidthsIsValid(DimensionValuesDto consideredDto)
+        {
+            ValidationOutput validationOutput = new ValidationOutputBadRequest();
             List<ValuesDto> possibleWidths = new List<ValuesDto>();
             foreach (var setOfValuesDto in consideredDto.PossibleWidths)
             {
@@ -93,17 +125,12 @@ namespace MerryClosets.Models.DTO.DTOValidators
 
                 possibleWidths.Add(setOfValuesDto);
             }
-            if (validationOutput.HasErrors())
-            {
-                return validationOutput;
-            }
+            return validationOutput;
+        }
 
-            //================== PossibleDepths attribute ==================
-            if (consideredDto.PossibleDepths == null || consideredDto.PossibleDepths.Count <= 0)
-            {
-                validationOutput.AddError("Dimension's depths", "There are no depths");
-                return validationOutput;
-            }
+        public ValidationOutput PossibleDepthsIsValid(DimensionValuesDto consideredDto)
+        {
+            ValidationOutput validationOutput = new ValidationOutputBadRequest();
 
             List<ValuesDto> possibleDepths = new List<ValuesDto>();
             foreach (var setOfValuesDto in consideredDto.PossibleDepths)

@@ -17,11 +17,11 @@ namespace MerryClosets.Configurations
         {
             var settings = new JsonSerializerSettings();
             //Values 
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(ValuesDto), "$type")
+            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(ValuesDto), "type")
                 .RegisterSubtype(typeof(DiscreteValueDto), ValuesDto.ValuesDtoType.DiscreteValueDto)
                 .RegisterSubtype(typeof(ContinuousValueDto), ValuesDto.ValuesDtoType.ContinuousValueDto)
                 .SerializeDiscriminatorProperty().Build());
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(Values), "$type")
+            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(Values), "type")
                 .RegisterSubtype(typeof(DiscreteValue), Values.ValuesType.DiscreteValue)
                 .RegisterSubtype(typeof(ContinuousValue), Values.ValuesType.ContinuousValue)
                 .SerializeDiscriminatorProperty().Build());

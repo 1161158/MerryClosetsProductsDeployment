@@ -172,6 +172,83 @@ namespace MerryClosets.Services.EF
             return validationOutput;
         }
 
+
+        private bool VerifyPartsDimensions(Product product, Product part)
+        {
+            foreach (var productDimension in product.Dimensions)
+            {
+                foreach (var partDimension in part.Dimensions)
+                {
+                    bool validateHeight = false;
+                    bool validateWidth = false;
+                    bool validateDepth = false;
+                    foreach (var productHeights in productDimension.PossibleHeights)
+                    {
+                        validateHeight = Validate(partDimension.PossibleHeights, productHeights);
+                        if(validateHeight){
+                            break;
+                        }
+                    }
+                    foreach (var productWidths in productDimension.PossibleWidths)
+                    {
+                        validateWidth = Validate(partDimension.PossibleWidths, productWidths);
+                        if(validateWidth){
+                            break;
+                        }
+                    }
+                    foreach (var productDepths in productDimension.PossibleDepths)
+                    {
+                        validateDepth = Validate(partDimension.PossibleDepths, productDepths);
+                        if(validateDepth){
+                            break;
+                        }
+                    }
+                    if (validateHeight && validateWidth && validateDepth)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private bool Validate(List<Values> list, Values productValue)
+        {
+            foreach (var value in list)
+            {
+                if (ValidateValues(productValue, value))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool ValidateValues(Values productValue, Values partValue)
+        {
+            if (productValue is DiscreteValue)
+            {
+                if (partValue is DiscreteValue)
+                {
+                    return ((DiscreteValue)productValue).Value == ((DiscreteValue)partValue).Value;
+                }
+                else
+                {
+                    return ((DiscreteValue)productValue).Value >= ((ContinuousValue)partValue).MinValue && ((DiscreteValue)productValue).Value <= ((ContinuousValue)partValue).MaxValue;
+                }
+            }
+            else
+            {
+                if (partValue is DiscreteValue)
+                {
+                    return ((DiscreteValue)partValue).Value <= ((ContinuousValue)productValue).MaxValue;
+                }
+                else
+                {
+                    return !(((ContinuousValue)partValue).MinValue > ((ContinuousValue)productValue).MaxValue || ((ContinuousValue)partValue).MaxValue < ((ContinuousValue)productValue).MinValue);
+                }
+            }
+        }
         /**
          * Method that will verify the products and respective algorithms (in the form of Part objects) that will be added to the product being created.
          * 
@@ -208,6 +285,14 @@ namespace MerryClosets.Services.EF
                     {
                         validationOutput.AddError("Reference of product in a part",
                             "No product with the reference '" + partDto.ProductReference + "' exists in the system.");
+                        return validationOutput;
+                    }
+
+                    validationOutput = new ValidationOutputBadRequest();
+                    if (!VerifyPartsDimensions(_mapper.Map<Product>(dto), _mapper.Map<Product>(partDto)))
+                    {
+                        validationOutput.AddError("Part of product",
+                                                    "The part '" + partDto.ProductReference + "' will never fit in the product '" + dto.Reference + "'.");
                         return validationOutput;
                     }
 
@@ -375,7 +460,7 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
-            if (dto.ProductMaterialList.Count > 0)
+            if (dto.ProductMaterialList!= null && dto.ProductMaterialList.Count > 0)
             {
                 validationOutput = VerifyMaterialsAndRespectiveAlgorithms(dto);
                 if (validationOutput.HasErrors())
@@ -384,7 +469,7 @@ namespace MerryClosets.Services.EF
                 }
             }
 
-            if (dto.Parts.Count > 0)
+            if (dto.Parts != null && dto.Parts.Count > 0)
             {
                 validationOutput = VerifyProductsAndRespectiveAlgorithms(dto);
                 if (validationOutput.HasErrors())
@@ -393,7 +478,7 @@ namespace MerryClosets.Services.EF
                 }
             }
 
-            if (dto.Dimensions.Count > 0)
+            if (dto.Dimensions!= null && dto.Dimensions.Count > 0)
             {
                 validationOutput = VerifyVariousDimensionValues(dto);
                 if (validationOutput.HasErrors())
@@ -477,6 +562,30 @@ namespace MerryClosets.Services.EF
 
             return productDtoList;
         }
+        
+        /**
+         * Method that will return all products present in the system, each in the form of a DTO OR all the errors found when trying to do so.
+         *
+         * May return an empty list, indicating that there are no products in the system (yet).
+         * This list will not include soft-deleted products.
+         */
+        public IEnumerable<ProductDto> GetAllStructure()
+        {
+            List<ProductDto> productDtoList = new List<ProductDto>();
+            List<Product> productList = _productRepository.List();
+
+            //For-each just to convert each Product object into a ProductDto object
+            foreach (var product in productList)
+            {
+                Category parentCategory = _categoryRepository.GetByReference(product.CategoryReference);
+                if (parentCategory.ParentCategoryReference == null)
+                {
+                    productDtoList.Add(_mapper.Map<ProductDto>(product));
+                }
+            }
+
+            return productDtoList;
+        }
 
 
         // ============ Methods to UPDATE something ============
@@ -500,7 +609,7 @@ namespace MerryClosets.Services.EF
             }
 
             validationOutput = new ValidationOutputForbidden();
-            if (dto.Reference != null)
+            if (dto.Reference != null && !dto.Reference.Equals(reference))
             {
                 validationOutput.AddError("Reference of product", "It's not allowed to update reference.");
                 return validationOutput;
@@ -841,6 +950,14 @@ namespace MerryClosets.Services.EF
                     return validationOutput;
                 }
 
+                validationOutput = new ValidationOutputBadRequest();
+                if (!VerifyPartsDimensions(productToModify, _productRepository.GetByReference(partDto.ProductReference)))
+                {
+                    validationOutput.AddError("Part of product",
+                                                "The part '" + partDto.ProductReference + "' will never fit in the product '" + productToModify.Reference + "'.");
+                    return validationOutput;
+                }
+
                 List<PartAlgorithmDto>
                     partAlgorithmDtoListToAdd =
                         new List<PartAlgorithmDto>(); //Serves no purpose other than to assert if there are duplicates
@@ -978,8 +1095,102 @@ namespace MerryClosets.Services.EF
             * 7. Validation for duplication between each DimensionValues item received
          }
          */
-        public ValidationOutput AddVariousDimensionValues(string reference,
-            IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
+        // public ValidationOutput AddVariousDimensionValues(string reference,
+        //     IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
+        // {
+        //     //1.
+        //     ValidationOutput validationOutput = new ValidationOutputNotFound();
+        //     if (!ProductExists(reference))
+        //     {
+        //         validationOutput.AddError("Reference of product",
+        //             "No product with the reference '" + reference + "' exists in the system.");
+        //         return validationOutput;
+        //     }
+
+        //     Product productToModify = _productRepository.GetByReference(reference);
+
+        //     List<DimensionValuesDto> dimensionValuesDtoList =
+        //         new List<DimensionValuesDto>(enumerableDimensionValuesDto);
+
+        //     validationOutput = new ValidationOutputBadRequest();
+        //     //2.
+        //     if (dimensionValuesDtoList.Count == 0)
+        //     {
+        //         validationOutput.AddError("Dimension values", "No set of dimension values were defined!");
+        //         return validationOutput;
+        //     }
+
+        //     List<DimensionValues> dimensionValuesListToAdd = new List<DimensionValues>();
+
+        //     foreach (var dimensionValuesDto in dimensionValuesDtoList)
+        //     {
+        //         //3.
+        //         validationOutput = _dimensionValuesDTOValidator.DTOIsValid(dimensionValuesDto);
+        //         if (validationOutput.HasErrors())
+        //         {
+        //             return validationOutput;
+        //         }
+
+        //         DimensionValues dimensionValues = _mapper.Map<DimensionValues>(dimensionValuesDto);
+
+        //         //4.
+        //         validationOutput = new ValidationOutputBadRequest();
+        //         if (productToModify.IsAssociatedWithDimensionValues(dimensionValues))
+        //         {
+        //             validationOutput.AddError("Dimension values",
+        //                 "One set of the specified sets of dimension values is already associated with the product '" +
+        //                 reference + "'.");
+        //             return validationOutput;
+        //         }
+
+        //         List<DimensionAlgorithmDto>
+        //             dimensionAlgorithmDtoList =
+        //                 new List<DimensionAlgorithmDto>(); //Serves no purpose other than to assert if there are duplicates
+        //         foreach (var dimensionAlgorithmDto in dimensionValuesDto.Algorithms)
+        //         {
+        //             //5.
+        //             validationOutput = _algorithmDTOValidator.DTOIsValid(dimensionAlgorithmDto);
+        //             if (validationOutput.HasErrors())
+        //             {
+        //                 return validationOutput;
+        //             }
+
+        //             //6.
+        //             validationOutput = new ValidationOutputBadRequest();
+        //             if (dimensionAlgorithmDtoList.Contains(dimensionAlgorithmDto))
+        //             {
+        //                 validationOutput.AddError("Dimension algorithm",
+        //                     "A dimension algorithm between a set of dimension values and the product'" + reference +
+        //                     "' is duplicated.");
+        //                 return validationOutput;
+        //             }
+
+        //             dimensionAlgorithmDtoList.Add(dimensionAlgorithmDto);
+        //         }
+
+        //         validationOutput = new ValidationOutputBadRequest();
+        //         //7.
+        //         if (dimensionValuesListToAdd.Contains(dimensionValues))
+        //         {
+        //             validationOutput.AddError("Dimension values",
+        //                 "A set of dimension values and respective algorithms are duplicated.");
+        //             return validationOutput;
+        //         }
+
+        //         dimensionValuesListToAdd.Add(dimensionValues);
+        //     }
+
+        //     foreach (var dimensionValuesToAdd in dimensionValuesListToAdd)
+        //     {
+        //         productToModify.AddDimensionValues(dimensionValuesToAdd);
+        //     }
+
+        //     validationOutput.DesiredReturn = enumerableDimensionValuesDto;
+        //     _productRepository.Update(productToModify);
+        //     return validationOutput;
+        // }
+
+        public ValidationOutput AddDimensionValues(string reference, DimensionValuesDto dimensionValuesDto)
         {
             //1.
             ValidationOutput validationOutput = new ValidationOutputNotFound();
@@ -991,85 +1202,192 @@ namespace MerryClosets.Services.EF
             }
 
             Product productToModify = _productRepository.GetByReference(reference);
-
-            List<DimensionValuesDto> dimensionValuesDtoList =
-                new List<DimensionValuesDto>(enumerableDimensionValuesDto);
-
+            var dimensionValues = _mapper.Map<DimensionValues>(dimensionValuesDto);
+            //4.
             validationOutput = new ValidationOutputBadRequest();
-            //2.
-            if (dimensionValuesDtoList.Count == 0)
+            if (productToModify.IsAssociatedWithDimensionValues(dimensionValues))
             {
-                validationOutput.AddError("Dimension values", "No set of dimension values were defined!");
+                validationOutput.AddError("Dimension values",
+                    "The specified dimension " + dimensionValuesDto.Reference + " is already associated with the product '" +
+                    reference + "'.");
                 return validationOutput;
             }
 
-            List<DimensionValues> dimensionValuesListToAdd = new List<DimensionValues>();
-
-            foreach (var dimensionValuesDto in dimensionValuesDtoList)
+            //3.
+            validationOutput = _dimensionValuesDTOValidator.DTOIsValid(dimensionValuesDto);
+            if (validationOutput.HasErrors())
             {
-                //3.
-                validationOutput = _dimensionValuesDTOValidator.DTOIsValid(dimensionValuesDto);
+                return validationOutput;
+            }
+
+            //Algorithm
+            List<DimensionAlgorithmDto>
+                dimensionAlgorithmDtoList =
+                    new List<DimensionAlgorithmDto>(); //Serves no purpose other than to assert if there are duplicates
+            foreach (var dimensionAlgorithmDto in dimensionValuesDto.Algorithms)
+            {
+                //5.
+                validationOutput = _algorithmDTOValidator.DTOIsValid(dimensionAlgorithmDto);
                 if (validationOutput.HasErrors())
                 {
                     return validationOutput;
                 }
 
-                DimensionValues dimensionValues = _mapper.Map<DimensionValues>(dimensionValuesDto);
-
-                //4.
+                //6.
                 validationOutput = new ValidationOutputBadRequest();
-                if (productToModify.IsAssociatedWithDimensionValues(dimensionValues))
+                if (dimensionAlgorithmDtoList.Contains(dimensionAlgorithmDto))
                 {
-                    validationOutput.AddError("Dimension values",
-                        "One set of the specified sets of dimension values is already associated with the product '" +
-                        reference + "'.");
+                    validationOutput.AddError("Dimension algorithm",
+                        "A dimension algorithm between a set of dimension values and the product'" + reference +
+                        "' is duplicated.");
                     return validationOutput;
                 }
 
-                List<DimensionAlgorithmDto>
-                    dimensionAlgorithmDtoList =
-                        new List<DimensionAlgorithmDto>(); //Serves no purpose other than to assert if there are duplicates
-                foreach (var dimensionAlgorithmDto in dimensionValuesDto.Algorithms)
-                {
-                    //5.
-                    validationOutput = _algorithmDTOValidator.DTOIsValid(dimensionAlgorithmDto);
-                    if (validationOutput.HasErrors())
-                    {
-                        return validationOutput;
-                    }
-
-                    //6.
-                    validationOutput = new ValidationOutputBadRequest();
-                    if (dimensionAlgorithmDtoList.Contains(dimensionAlgorithmDto))
-                    {
-                        validationOutput.AddError("Dimension algorithm",
-                            "A dimension algorithm between a set of dimension values and the product'" + reference +
-                            "' is duplicated.");
-                        return validationOutput;
-                    }
-
-                    dimensionAlgorithmDtoList.Add(dimensionAlgorithmDto);
-                }
-
-                validationOutput = new ValidationOutputBadRequest();
-                //7.
-                if (dimensionValuesListToAdd.Contains(dimensionValues))
-                {
-                    validationOutput.AddError("Dimension values",
-                        "A set of dimension values and respective algorithms are duplicated.");
-                    return validationOutput;
-                }
-
-                dimensionValuesListToAdd.Add(dimensionValues);
+                dimensionAlgorithmDtoList.Add(dimensionAlgorithmDto);
             }
 
-            foreach (var dimensionValuesToAdd in dimensionValuesListToAdd)
-            {
-                productToModify.AddDimensionValues(dimensionValuesToAdd);
-            }
-
-            validationOutput.DesiredReturn = enumerableDimensionValuesDto;
+            productToModify.AddDimensionValues(dimensionValues);
             _productRepository.Update(productToModify);
+            validationOutput.DesiredReturn = dimensionValues;
+            return validationOutput;
+        }
+
+        //Espera-se que o producto já tenha a dimensionValuesDto
+        public ValidationOutput AddValueElement(string productReference, string dimensionReference, DimensionValuesDto dimensionValuesDto)
+        {
+            //1.
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!ProductExists(productReference))
+            {
+                validationOutput.AddError("Reference of product",
+                    "No product with the reference '" + productReference + "' exists in the system.");
+                return validationOutput;
+            }
+
+            Product productToModify = _productRepository.GetByReference(productReference);
+            dimensionValuesDto.Reference = dimensionReference;//to make sure that the reference of the dto is equal do to dimensionReference
+            var dimensionValues = _mapper.Map<DimensionValues>(dimensionValuesDto);
+
+            //4. Verifica que o produto já contêm a dimensionValues
+            validationOutput = new ValidationOutputBadRequest();
+            if (!productToModify.IsAssociatedWithDimensionValues(dimensionValues))
+            {
+                validationOutput.AddError("Dimension values",
+                    "The specified dimension " + dimensionValuesDto.Reference + " isn't associated with the product '" +
+                    productReference + "'.");
+                return validationOutput;
+            }
+
+            //List
+            if (dimensionValues.PossibleHeights != null && dimensionValues.PossibleHeights.Count > 0)
+            {
+                validationOutput = _dimensionValuesDTOValidator.PossibleHeightsIsValid(dimensionValuesDto);
+                if (!validationOutput.HasErrors())
+                {
+                    foreach (var dimension in dimensionValues.PossibleHeights)
+                    {
+                        if (productToModify.GetDimensionValues(dimensionValues.Reference).PossibleHeights.Contains(dimension))
+                        {
+                            validationOutput.AddError("Dimension values", "The PossibleHeights '" + dimension.ToString() + "' exist already.");
+                            return validationOutput;
+                        }
+                        else { productToModify.GetDimensionValues(dimensionValues.Reference).PossibleHeights.Add(dimension); }
+                    }
+                }
+                else
+                {
+                    return validationOutput;
+                }
+            }
+
+            if (dimensionValues.PossibleWidths != null && dimensionValues.PossibleWidths.Count > 0)
+            {
+                validationOutput = _dimensionValuesDTOValidator.PossibleWidthsIsValid(dimensionValuesDto);
+                if (!validationOutput.HasErrors())
+                {
+                    foreach (var dimension in dimensionValues.PossibleWidths)
+                    {
+                        if (productToModify.GetDimensionValues(dimensionValues.Reference).PossibleWidths.Contains(dimension))
+                        {
+                            validationOutput.AddError("Dimension values", "The PossibleWidth '" + dimension.ToString() + "' exist already.");
+                            return validationOutput;
+                        }
+                        else { productToModify.GetDimensionValues(dimensionValues.Reference).PossibleWidths.Add(dimension); }
+                    }
+                }
+                else
+                {
+                    return validationOutput;
+                }
+            }
+            if (dimensionValues.PossibleDepths != null && dimensionValues.PossibleDepths.Count > 0)
+            {
+                validationOutput = _dimensionValuesDTOValidator.PossibleDepthsIsValid(dimensionValuesDto);
+                if (!validationOutput.HasErrors())
+                {
+                    foreach (var dimension in dimensionValues.PossibleDepths)
+                    {
+                        if (productToModify.GetDimensionValues(dimensionValues.Reference).PossibleDepths.Contains(dimension))
+                        {
+                            validationOutput.AddError("Dimension values", "The PossibleDepths '" + dimension.ToString() + "' exist already.");
+                            return validationOutput;
+                        }
+                        else { productToModify.GetDimensionValues(dimensionValues.Reference).PossibleDepths.Add(dimension); }
+                    }
+                }
+                else
+                {
+                    return validationOutput;
+                }
+            }
+
+            _productRepository.Update(productToModify);
+            validationOutput.DesiredReturn = dimensionValuesDto;
+            return validationOutput;
+        }
+
+        //Espera-se que o producto já tenha a dimensionValuesDto
+        public ValidationOutput AddDimensionAlgorithm(string productReference, string dimensionReference, DimensionAlgorithmDto algorithmDto)
+        {
+            //1.
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!ProductExists(productReference))
+            {
+                validationOutput.AddError("Reference of product",
+                    "No product with the reference '" + productReference + "' exists in the system.");
+                return validationOutput;
+            }
+
+            Product productToModify = _productRepository.GetByReference(productReference);
+            var dimensionValues = productToModify.GetDimensionValues(dimensionReference);
+
+            //4. Verifica que o produto já contêm a dimensionValues
+            validationOutput = new ValidationOutputBadRequest();
+            if (dimensionValues == null)
+            {
+                validationOutput.AddError("Dimension values",
+                    "The specified dimension " + dimensionReference + " isn't associated with the product '" +
+                    productReference + "'.");
+                return validationOutput;
+            }
+
+            //Algorithm
+            //5.
+            validationOutput = _algorithmDTOValidator.DTOIsValid(algorithmDto);
+            if (validationOutput.HasErrors())
+            {
+                return validationOutput;
+            }
+            var dimensionAlgorithm = _mapper.Map<DimensionAlgorithm>(algorithmDto);
+            if (!productToModify.GetDimensionValues(dimensionReference).AddDimensionAlgorithm(dimensionAlgorithm))
+            {
+                validationOutput.AddError("Dimension algorithm",
+                            "A dimension algorithm between the dimension '" + dimensionReference + "' and the product '" + productReference +
+                            "' is duplicated.");
+                return validationOutput;
+            }
+            _productRepository.Update(productToModify);
+            validationOutput.DesiredReturn = dimensionValues;
             return validationOutput;
         }
 
@@ -1085,11 +1403,101 @@ namespace MerryClosets.Services.EF
             * 4. Validation for duplication between each DimensionValues item received
          }
          */
-        public ValidationOutput DeleteVariousDimensionValues(string reference,
-            IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
+        // public ValidationOutput DeleteVariousDimensionValues(string reference,
+        //     IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
+        // {
+        //     List<DimensionValuesDto> dimensionValuesDtoList =
+        //         new List<DimensionValuesDto>(enumerableDimensionValuesDto);
+        //     ValidationOutput validationOutput = new ValidationOutputBadRequest();
+
+        //     Product productToModify = _productRepository.GetByReference(reference);
+
+        //     //1.
+        //     validationOutput = new ValidationOutputNotFound();
+        //     if (!ProductExists(reference))
+        //     {
+        //         validationOutput.AddError("Reference of product",
+        //             "No product with the reference '" + reference + "' exists in the system.");
+        //         return validationOutput;
+        //     }
+
+        //     //2.
+        //     if (dimensionValuesDtoList.Count == 0)
+        //     {
+        //         validationOutput.AddError("Dimension values", "No set of dimension values were defined!");
+        //         return validationOutput;
+        //     }
+
+        //     List<DimensionValues> dimensionValuesListToDelete = new List<DimensionValues>();
+
+        //     foreach (var dimensionValuesDto in dimensionValuesDtoList)
+        //     {
+        //         DimensionValues dimensionValues = _mapper.Map<DimensionValues>(dimensionValuesDto);
+
+        //         //3.
+        //         validationOutput = new ValidationOutputBadRequest();
+        //         if (!productToModify.IsAssociatedWithDimensionValues(dimensionValues))
+        //         {
+        //             validationOutput.AddError("Dimension values",
+        //                 "One set of the specified sets of dimension values is not associated with the product '" +
+        //                 reference + "' and therefore.");
+        //             return validationOutput;
+        //         }
+
+        //         //4.
+        //         if (dimensionValuesListToDelete.Contains(dimensionValues))
+        //         {
+        //             validationOutput.AddError("Dimension values",
+        //                 "A set of dimension values and respective algorithms are duplicated.");
+        //             return validationOutput;
+        //         }
+
+        //         dimensionValuesListToDelete.Add(dimensionValues);
+        //     }
+
+        //     foreach (var dimensionValuesToDelete in dimensionValuesListToDelete)
+        //     {
+        //         productToModify.RemoveDimensionValues(dimensionValuesToDelete);
+        //     }
+
+        //     _productRepository.Update(productToModify);
+        //     return validationOutput;
+        // }
+
+        public ValidationOutput DeleteDimensionValues(string productReference, string dimensionReference)
         {
-            List<DimensionValuesDto> dimensionValuesDtoList =
-                new List<DimensionValuesDto>(enumerableDimensionValuesDto);
+            ValidationOutput validationOutput = new ValidationOutputBadRequest();
+
+            Product productToModify = _productRepository.GetByReference(productReference);
+
+            //1.
+            validationOutput = new ValidationOutputNotFound();
+            if (!ProductExists(productReference))
+            {
+                validationOutput.AddError("Reference of product",
+                    "No product with the reference '" + productReference + "' exists in the system.");
+                return validationOutput;
+            }
+
+            var dimensionValues = productToModify.GetDimensionValues(dimensionReference);
+
+            //4. Verifica que o produto já contêm a dimensionValues
+            validationOutput = new ValidationOutputNotFound();
+            if (dimensionValues == null)
+            {
+                validationOutput.AddError("Dimension values",
+                    "The specified dimension " + dimensionReference + " isn't associated with the product '" +
+                    productReference + "'.");
+                return validationOutput;
+            }
+
+            productToModify.RemoveDimensionValues(dimensionValues);
+            _productRepository.Update(productToModify);
+            return validationOutput;
+        }
+
+        public ValidationOutput DeleteValueElement(string reference, string dimensionReference, DimensionValuesDto dimensionValuesDto)
+        {
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
 
             Product productToModify = _productRepository.GetByReference(reference);
@@ -1103,46 +1511,107 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
-            //2.
-            if (dimensionValuesDtoList.Count == 0)
+            //4. Verifica que o produto já contém a dimensionValues
+            validationOutput = new ValidationOutputBadRequest();
+            if (!productToModify.IsAssociatedWithDimensionValues(productToModify.GetDimensionValues(dimensionReference)))
             {
-                validationOutput.AddError("Dimension values", "No set of dimension values were defined!");
+                validationOutput.AddError("Dimension values",
+                    "The specified dimension " + dimensionValuesDto.Reference + " isn't associated with the product '" +
+                    reference + "'.");
                 return validationOutput;
             }
 
-            List<DimensionValues> dimensionValuesListToDelete = new List<DimensionValues>();
+            var dimensionValues = _mapper.Map<DimensionValues>(dimensionValuesDto);
 
-            foreach (var dimensionValuesDto in dimensionValuesDtoList)
+            //List
+            if (dimensionValues.PossibleHeights != null && dimensionValues.PossibleHeights.Count > 0)
             {
-                DimensionValues dimensionValues = _mapper.Map<DimensionValues>(dimensionValuesDto);
-
-                //3.
-                validationOutput = new ValidationOutputBadRequest();
-                if (!productToModify.IsAssociatedWithDimensionValues(dimensionValues))
+                foreach (var dimension in dimensionValues.PossibleHeights.ToList())
                 {
-                    validationOutput.AddError("Dimension values",
-                        "One set of the specified sets of dimension values is not associated with the product '" +
-                        reference + "' and therefore.");
-                    return validationOutput;
+                    if (!productToModify.GetDimensionValues(dimensionValues.Reference).PossibleHeights.Contains(dimension))
+                    {
+                        validationOutput.AddError("Dimension values", "The PossibleHeights '" + dimension.ToString() + "' doesn't exist.");
+                        return validationOutput;
+                    }
+                    productToModify.GetDimensionValues(dimensionValues.Reference).PossibleHeights.Remove(dimension);
                 }
-
-                //4.
-                if (dimensionValuesListToDelete.Contains(dimensionValues))
-                {
-                    validationOutput.AddError("Dimension values",
-                        "A set of dimension values and respective algorithms are duplicated.");
-                    return validationOutput;
-                }
-
-                dimensionValuesListToDelete.Add(dimensionValues);
             }
-
-            foreach (var dimensionValuesToDelete in dimensionValuesListToDelete)
+            if (dimensionValues.PossibleWidths != null && dimensionValues.PossibleWidths.Count > 0)
             {
-                productToModify.RemoveDimensionValues(dimensionValuesToDelete);
+                foreach (var dimension in dimensionValues.PossibleWidths.ToList())
+                {
+                    if (!productToModify.GetDimensionValues(dimensionValues.Reference).PossibleWidths.Contains(dimension))
+                    {
+                        validationOutput.AddError("Dimension values", "The PossibleWidths '" + dimension.ToString() + "' doesn't exist.");
+                        return validationOutput;
+                    }
+                    productToModify.GetDimensionValues(dimensionValues.Reference).PossibleWidths.Remove(dimension);
+                }
+            }
+            if (dimensionValues.PossibleDepths != null && dimensionValues.PossibleDepths.Count > 0)
+            {
+                foreach (var dimension in dimensionValues.PossibleDepths.ToList())
+                {
+                    if (!productToModify.GetDimensionValues(dimensionValues.Reference).PossibleDepths.Contains(dimension))
+                    {
+                        validationOutput.AddError("Dimension values", "The PossibleDepths '" + dimension.ToString() + "' doesn't exist.");
+                        return validationOutput;
+                    }
+                    productToModify.GetDimensionValues(dimensionValues.Reference).PossibleDepths.Remove(dimension);
+                }
             }
 
             _productRepository.Update(productToModify);
+            validationOutput.DesiredReturn = dimensionValuesDto;
+            return validationOutput;
+        }
+
+        public ValidationOutput DeleteDimensionAlgorithm(string productReference, string dimensionReference, DimensionAlgorithmDto algorithmDto)
+        {
+            ValidationOutput validationOutput = new ValidationOutputBadRequest();
+
+            Product productToModify = _productRepository.GetByReference(productReference);
+
+            //1.
+            validationOutput = new ValidationOutputNotFound();
+            if (!ProductExists(productReference))
+            {
+                validationOutput.AddError("Reference of product",
+                    "No product with the reference '" + productReference + "' exists in the system.");
+                return validationOutput;
+            }
+
+            var dimensionValues = productToModify.GetDimensionValues(dimensionReference);
+
+            //4. Verifica que o produto já contêm a dimensionValues
+            validationOutput = new ValidationOutputBadRequest();
+            if (!productToModify.IsAssociatedWithDimensionValues(dimensionValues))
+            {
+                validationOutput.AddError("Dimension values",
+                    "The specified dimension " + dimensionReference + " isn't associated with the product '" +
+                    productReference + "'.");
+                return validationOutput;
+            }
+
+            //Algorithm
+            //5.
+            validationOutput = _algorithmDTOValidator.DTOIsValid(algorithmDto);
+            if (validationOutput.HasErrors())
+            {
+                return validationOutput;
+            }
+            var algorithm = _mapper.Map<DimensionAlgorithm>(algorithmDto);
+            if (!productToModify.GetDimensionValues(dimensionReference).Algorithms.Contains(algorithm))
+            {
+                validationOutput.AddError("Dimension algorithm",
+                                            "A dimension algorithm between the dimension '" + dimensionReference + "' and the product '" + productReference +
+                                            "' doesn't exist.");
+                return validationOutput;
+            }
+            productToModify.GetDimensionValues(dimensionReference).Algorithms.Remove(algorithm);
+
+            _productRepository.Update(productToModify);
+            validationOutput.DesiredReturn = _mapper.Map<DimensionValuesDto>(dimensionValues);
             return validationOutput;
         }
 
@@ -1380,6 +1849,13 @@ namespace MerryClosets.Services.EF
             }
 
             Part returnPart = new Part(dto.ProductReference);
+            validationOutput = new ValidationOutputBadRequest();
+            if (!VerifyPartsDimensions(desiredProduct, productPart))
+            {
+                validationOutput.AddError("Part of product",
+                                            "The part '" + productPart.Reference + "' will never fit in the product '" + desiredProduct.Reference + "'.");
+                return validationOutput;
+            }
 
             if (dto.Algorithms == null)
             {

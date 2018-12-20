@@ -23,7 +23,7 @@ namespace MerryClosets.Models.Product
             {
                 return false;
             }
-            
+
             if (object.ReferenceEquals(this, obj))
             {
                 return true;
@@ -36,6 +36,11 @@ namespace MerryClosets.Models.Product
         public override int GetHashCode()
         {
             return System.Tuple.Create(Value).GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return "Value: " + this.Value.ToString();
         }
     }
 }

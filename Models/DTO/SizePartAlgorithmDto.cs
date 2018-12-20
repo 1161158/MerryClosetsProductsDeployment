@@ -7,7 +7,7 @@ namespace MerryClosets.Models.DTO
 
         public SizePartAlgorithmDto() {
             //This algorithm is NOT implemented yet
-            base.type = RestrictionName.SIZE_PART_ALGORITHM;
+            base.type = Strings.SIZE_PART_ALGORITHM;
         }
     }
 }

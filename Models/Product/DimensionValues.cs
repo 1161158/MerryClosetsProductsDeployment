@@ -5,25 +5,28 @@ namespace MerryClosets.Models.Product
 {
     public class DimensionValues : ValueObject
     {
+        public string Reference { get; set; }
         public List<Values> PossibleHeights { get; set; } = new List<Values>();
         public List<Values> PossibleWidths { get; set; } = new List<Values>();
         public List<Values> PossibleDepths { get; set; } = new List<Values>();
         public List<DimensionAlgorithm> Algorithms { get; set; } = new List<DimensionAlgorithm>();
 
-        public DimensionValues(List<Values> possibleHeights, List<Values> possibleWidths, List<Values> possibleDepths)
+        public DimensionValues(List<Values> possibleHeights, List<Values> possibleWidths, List<Values> possibleDepths, string Reference)
         {
             this.PossibleHeights = possibleHeights;
             this.PossibleWidths = possibleWidths;
             this.PossibleDepths = possibleDepths;
+            this.Reference = Reference;
         }
 
         public DimensionValues(List<Values> possibleHeights, List<Values> possibleWidths, List<Values> possibleDepths,
-            List<DimensionAlgorithm> restrictions)
+            List<DimensionAlgorithm> restrictions, string Reference)
         {
             this.PossibleHeights = possibleHeights;
             this.PossibleWidths = possibleWidths;
             this.PossibleDepths = possibleDepths;
             this.Algorithms = restrictions;
+            this.Reference = Reference;
         }
 
         protected DimensionValues()
@@ -78,14 +81,17 @@ namespace MerryClosets.Models.Product
                 return true;
             }
 
-            var other = (DimensionValues) obj;
-            return Compare.ContentOfTwoLists(this.PossibleHeights, other.PossibleHeights)
-                   && Compare.ContentOfTwoLists(this.PossibleWidths, other.PossibleWidths)
-                   && Compare.ContentOfTwoLists(this.PossibleDepths, other.PossibleDepths);
+            var other = (DimensionValues)obj;
+            return this.Reference == other.Reference;
+            // return Compare.ContentOfTwoLists(this.PossibleHeights, other.PossibleHeights)
+            //        && Compare.ContentOfTwoLists(this.PossibleWidths, other.PossibleWidths)
+            //        && Compare.ContentOfTwoLists(this.PossibleDepths, other.PossibleDepths);
         }
 
-        public bool AddDimensionAlgorithm(DimensionAlgorithm dimensionAlgorithm){
-            if(!this.Algorithms.Contains(dimensionAlgorithm)){
+        public bool AddDimensionAlgorithm(DimensionAlgorithm dimensionAlgorithm)
+        {
+            if (!this.Algorithms.Contains(dimensionAlgorithm))
+            {
                 this.Algorithms.Add(dimensionAlgorithm);
                 return true;
             }

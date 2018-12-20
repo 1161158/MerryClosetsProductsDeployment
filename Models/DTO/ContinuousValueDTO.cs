@@ -14,7 +14,7 @@ namespace MerryClosets.Models.DTO
         {
             this.MinValue = minValue;
             this.MaxValue = maxValue;
-            base.type = RestrictionName.CONTINUOUS_VALUE;
+            base.type = Strings.CONTINUOUS_VALUE;
         }
 
         protected ContinuousValueDto() { }

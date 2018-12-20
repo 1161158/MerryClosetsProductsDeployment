@@ -15,8 +15,13 @@ namespace MerryClosets.Models.DTO
             this.SecondValueDesc = secondValueDesc;
             this.Operator = op;
             this.Ratio = ratio;
-            base.type = RestrictionName.RATIO_ALGORITHM;
+            base.type = Strings.RATIO_ALGORITHM;
         }
-        protected RatioAlgorithmDto(){}
+        protected RatioAlgorithmDto() { }
+
+        public override string ToString()
+        {
+            return "Algorithm " + this.type;
+        }
     }
 }

@@ -6,9 +6,9 @@ using MerryClosets.Utils;
 
 namespace MerryClosets.Models.DTO
 {
-    [JsonConverter(typeof(JsonSubtypes), "$type")]
-    [JsonSubtypes.KnownSubType(typeof(DiscreteValueDto), RestrictionName.DISCRETE_VALUE)]
-    [JsonSubtypes.KnownSubType(typeof(ContinuousValueDto), RestrictionName.CONTINUOUS_VALUE)]
+    [JsonConverter(typeof(JsonSubtypes), "type")]
+    [JsonSubtypes.KnownSubType(typeof(DiscreteValueDto), Strings.DISCRETE_VALUE)]
+    [JsonSubtypes.KnownSubType(typeof(ContinuousValueDto), Strings.CONTINUOUS_VALUE)]
     public abstract class ValuesDto : ValueObjectDto
     {
         public string type;

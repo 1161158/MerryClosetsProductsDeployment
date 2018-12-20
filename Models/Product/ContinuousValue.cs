@@ -27,7 +27,7 @@ namespace MerryClosets.Models.Product
             {
                 return false;
             }
-            
+
             if (object.ReferenceEquals(this, obj))
             {
                 return true;
@@ -40,6 +40,11 @@ namespace MerryClosets.Models.Product
         public override int GetHashCode()
         {
             return System.Tuple.Create(this.MaxValue, this.MinValue).GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return "MinValue: " + MinValue + " MaxValue" + MaxValue;
         }
     }
 }

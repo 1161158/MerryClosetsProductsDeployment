@@ -4,11 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AutoMapper;
 using MerryClosets.Configurations;
-using JsonSubTypes;
-using MerryClosets.Models.DTO;
-using MerryClosets.Models.Product;
-using Newtonsoft.Json;
-using MerryClosets.Models.Restriction;
 
 namespace MerryClosets
 {
@@ -21,48 +16,6 @@ namespace MerryClosets
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-
-            var settings = new JsonSerializerSettings();
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(ValuesDto), "$type")
-                .RegisterSubtype(typeof(DiscreteValueDto), ValuesDto.ValuesDtoType.DiscreteValueDto)
-                .RegisterSubtype(typeof(ContinuousValueDto), ValuesDto.ValuesDtoType.ContinuousValueDto)
-                .SerializeDiscriminatorProperty().Build());
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(Values), "$type")
-                .RegisterSubtype(typeof(DiscreteValue), Values.ValuesType.DiscreteValue)
-                .RegisterSubtype(typeof(ContinuousValue), Values.ValuesType.ContinuousValue)
-                .SerializeDiscriminatorProperty().Build());
-            
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(AlgorithmDto), "$type")
-                .RegisterSubtype(typeof(MaterialFinishPartAlgorithmDto), AlgorithmDto.RestrictionDtoType.MaterialFinishPartAlgorithmDto)
-                .RegisterSubtype(typeof(RatioAlgorithmDto), AlgorithmDto.RestrictionDtoType.RatioAlgorithmDto)
-                .RegisterSubtype(typeof(SizePercentagePartAlgorithmDto), AlgorithmDto.RestrictionDtoType.SizePercentagePartAlgorithmDto)
-                .SerializeDiscriminatorProperty().Build());
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(Algorithm), "$type")
-                .RegisterSubtype(typeof(MaterialFinishPartAlgorithm), Algorithm.RestrictionType.MaterialFinishPartAlgorithm)
-                .RegisterSubtype(typeof(RatioAlgorithm), Algorithm.RestrictionType.RatioAlgorithm)
-                .RegisterSubtype(typeof(SizePercentagePartAlgorithm), Algorithm.RestrictionType.SizePercentagePartAlgorithm)
-                .SerializeDiscriminatorProperty().Build());
-            
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(DimensionAlgorithmDto), "$type")
-                .RegisterSubtype(typeof(RatioAlgorithmDto), DimensionAlgorithmDto.RestrictionDtoType.RatioAlgorithmDto)
-                .SerializeDiscriminatorProperty().Build());
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(DimensionAlgorithm), "$type")
-                .RegisterSubtype(typeof(RatioAlgorithm), DimensionAlgorithm.RestrictionType.RatioAlgorithm)
-                .SerializeDiscriminatorProperty().Build());
-            
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(PartAlgorithmDto), "$type")
-                .RegisterSubtype(typeof(SizePercentagePartAlgorithmDto), PartAlgorithmDto.RestrictionDtoType.SizePercentagePartAlgorithmDto)
-                .SerializeDiscriminatorProperty().Build());
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(PartAlgorithm), "$type")
-                .RegisterSubtype(typeof(SizePercentagePartAlgorithm), PartAlgorithm.RestrictionType.SizePercentagePartAlgorithm)
-                .SerializeDiscriminatorProperty().Build());
-            
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(PartAlgorithmDto), "$type")
-                .RegisterSubtype(typeof(MaterialFinishPartAlgorithmDto), PartAlgorithmDto.RestrictionDtoType.MaterialFinishPartAlgorithmDto)
-                .SerializeDiscriminatorProperty().Build());
-            settings.Converters.Add(JsonSubtypesConverterBuilder.Of(typeof(PartAlgorithm), "$type")
-                .RegisterSubtype(typeof(MaterialFinishPartAlgorithm), PartAlgorithm.RestrictionType.MaterialFinishPartAlgorithm)
-                .SerializeDiscriminatorProperty().Build());
             
             Configuration = builder.Build();
         }
@@ -76,8 +29,9 @@ namespace MerryClosets
 
             int chosenDB = Configuration.GetValue("ChosenDB", 0);
             DataConfiguration.configure((DataProviderEnum)chosenDB, Configuration, services);
+            DtoValidatorConfiguration.configure(Configuration, services);
             ServiceConfiguration.configure(Configuration, services);
-
+            AbstractClassConfiguration.configure();
             services.AddCors();
             services.AddMvc();
         }

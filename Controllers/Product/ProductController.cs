@@ -174,8 +174,66 @@ namespace MerryClosets.Controllers.Product
         /**
          * POST method that allows the addition of dimension values to the product with the passed reference.
          */
-        [HttpPost("{reference}/dimension-values")]
-        public async Task<IActionResult> AddDimensionValues([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> dimensionValuesDto)
+        // [HttpPost("{reference}/dimension-values")]
+        // public async Task<IActionResult> AddDimensionValues([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> dimensionValuesDto)
+        // {
+        //     if (!_userValidationService.CheckAuthorizationToken(authorization))
+        //     {
+        //         return Unauthorized();
+        //     }
+        //     if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+        //     {
+        //         return Unauthorized();
+        //     }
+        //     var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
+        //     object[] array = new object[2];
+
+        //     array[0] = reference;
+        //     List<DimensionValuesDto> dtos = dimensionValuesDto.ToList();
+
+        //     var sb = new StringBuilder();
+
+        //     for (var j = 0; j < dtos.Count; j++)
+        //     {
+        //         sb.Append("{Possible Heights: ");
+        //         sb.Append(EnumerableUtils.convert(dtos[j].PossibleHeights));
+        //         sb.Append(". Possible Widths: ");
+        //         sb.Append(EnumerableUtils.convert(dtos[j].PossibleWidths));
+        //         sb.Append(". Possible Depths: ");
+        //         sb.Append(EnumerableUtils.convert(dtos[j].PossibleDepths));
+        //         sb.Append("}");
+        //     }
+
+        //     array[1] = sb.ToString();
+        //     _logger.logInformation(userRef, LoggingEvents.PostItem, "Adding Dimension Values By Reference: {0} -- {1}", array);
+        //     ValidationOutput validationOutput = _productService.AddVariousDimensionValues(reference, dimensionValuesDto);
+        //     if (validationOutput.HasErrors())
+        //     {
+        //         if (validationOutput is ValidationOutputBadRequest)
+        //         {
+        //             _logger.logCritical(userRef, LoggingEvents.PostBadRequest, "Adding Dimension Values Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+        //             return BadRequest(validationOutput.FoundErrors);
+        //         }
+
+        //         if (validationOutput is ValidationOutputNotFound)
+        //         {
+        //             _logger.logCritical(userRef, LoggingEvents.PostNotFound, "Adding Dimension Values Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+        //             return NotFound(validationOutput.FoundErrors);
+        //         }
+
+        //         _logger.logCritical(userRef, LoggingEvents.PostInternalError, "Type of validation output not recognized. Please contact your software provider.");
+        //         return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+        //     }
+        //     else
+        //     {
+        //         _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Dimension Values to Product Succeeded: {0}", sb.ToString());
+        //         return Ok(validationOutput.DesiredReturn);
+        //     }
+        // }
+
+        [HttpPost("{reference}/dimensions")]
+        public async Task<IActionResult> AddDimensionValues([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] DimensionValuesDto dimensionValuesDto)
         {
             if (!_userValidationService.CheckAuthorizationToken(authorization))
             {
@@ -190,24 +248,10 @@ namespace MerryClosets.Controllers.Product
             object[] array = new object[2];
 
             array[0] = reference;
-            List<DimensionValuesDto> dtos = dimensionValuesDto.ToList();
+            array[1] = dimensionValuesDto.Reference;
 
-            var sb = new StringBuilder();
-
-            for (var j = 0; j < dtos.Count; j++)
-            {
-                sb.Append("{Possible Heights: ");
-                sb.Append(EnumerableUtils.convert(dtos[j].PossibleHeights));
-                sb.Append(". Possible Widths: ");
-                sb.Append(EnumerableUtils.convert(dtos[j].PossibleWidths));
-                sb.Append(". Possible Depths: ");
-                sb.Append(EnumerableUtils.convert(dtos[j].PossibleDepths));
-                sb.Append("}");
-            }
-
-            array[1] = sb.ToString();
             _logger.logInformation(userRef, LoggingEvents.PostItem, "Adding Dimension Values By Reference: {0} -- {1}", array);
-            ValidationOutput validationOutput = _productService.AddVariousDimensionValues(reference, dimensionValuesDto);
+            ValidationOutput validationOutput = _productService.AddDimensionValues(reference, dimensionValuesDto);
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
@@ -227,7 +271,95 @@ namespace MerryClosets.Controllers.Product
             }
             else
             {
-                _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Dimension Values to Product Succeeded: {0}", sb.ToString());
+                _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Dimension Values to Product Succeeded: {0}", dimensionValuesDto.Reference);
+                return Ok(validationOutput.DesiredReturn);
+            }
+        }
+
+        [HttpPost("{productReference}/dimensions/{dimensionReference}/dimensions-values")]
+        public async Task<IActionResult> AddValueElement([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string productReference, [FromRoute] string dimensionReference, [FromBody] DimensionValuesDto dimensionValuesDto)
+        {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
+            object[] array = new object[2];
+
+            array[0] = productReference;
+            array[1] = dimensionValuesDto.ToString();
+            _logger.logInformation(userRef, LoggingEvents.PostItem, "Adding Dimension Values By Reference: {0} -- {1}", array);
+            ValidationOutput validationOutput = _productService.AddValueElement(productReference, dimensionReference, dimensionValuesDto);
+            if (validationOutput.HasErrors())
+            {
+                if (validationOutput is ValidationOutputBadRequest)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.PostBadRequest, "Adding Dimension Values Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    return BadRequest(validationOutput.FoundErrors);
+                }
+
+                if (validationOutput is ValidationOutputNotFound)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.PostNotFound, "Adding Dimension Values Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    return NotFound(validationOutput.FoundErrors);
+                }
+
+                _logger.logCritical(userRef, LoggingEvents.PostInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+            }
+            else
+            {
+                _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Dimension Values to Product Succeeded: {0}", array[1]);
+                return Ok(validationOutput.DesiredReturn);
+            }
+        }
+
+        [HttpPost("{productReference}/dimensions/{dimensionReference}/dimensions-algorithms")]
+        public async Task<IActionResult> AddDimensionAlgorithm([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string productReference, [FromRoute] string dimensionReference, [FromBody] DimensionAlgorithmDto dimensionAlgorithmDto)
+        {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
+            object[] array = new object[3];
+
+            array[0] = productReference;
+            array[1] = dimensionReference;
+            array[2] = dimensionAlgorithmDto.ToString();
+
+            _logger.logInformation(userRef, LoggingEvents.PostItem, "Adding Dimension Algorithm By Reference: {0} -- {1} -- {2}", array);
+            ValidationOutput validationOutput = _productService.AddDimensionAlgorithm(productReference, dimensionReference, dimensionAlgorithmDto);
+            if (validationOutput.HasErrors())
+            {
+                if (validationOutput is ValidationOutputBadRequest)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.PostBadRequest, "Adding Dimension Algorithm Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    return BadRequest(validationOutput.FoundErrors);
+                }
+
+                if (validationOutput is ValidationOutputNotFound)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.PostNotFound, "Adding Dimension Algorithm Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    return NotFound(validationOutput.FoundErrors);
+                }
+
+                _logger.logCritical(userRef, LoggingEvents.PostInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+            }
+            else
+            {
+                _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Dimension Algorithm to Product Succeeded: {0}", array[1]);
                 return Ok(validationOutput.DesiredReturn);
             }
         }
@@ -311,7 +443,7 @@ namespace MerryClosets.Controllers.Product
             }
             else
             {
-                var desiredReturn = (ProductDto) validationOutput.DesiredReturn;
+                var desiredReturn = (ProductDto)validationOutput.DesiredReturn;
                 _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Restriction to Product Succeeded: {0}", desiredReturn.Reference);
                 return Ok(desiredReturn);
             }
@@ -340,54 +472,78 @@ namespace MerryClosets.Controllers.Product
             _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Products: {0}", EnumerableUtils.convert(list));
             return Ok(list);
         }
+        
+        /**
+         * GET method that will return all existent products in the system.
+         */
+        [HttpGet("top/structure")]
+        public async Task<IActionResult> GetAllProductsStructure([FromHeader(Name = "Authorization")] string authorization)
+        {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.Validate(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
+            IEnumerable<ProductDto> list = _productService.GetAllStructure();
+            _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Products: {0}", EnumerableUtils.convert(list));
+            return Ok(list);
+        }
 
         /**
          * GET method that will return the product with the given reference.
          */
         [HttpGet("{reference}", Name = "GetProduct")]
-        public async Task<IActionResult> GetProduct( /* [FromHeader(Name = "Authorization")] string authorization, */  [FromRoute] string reference)
+        public async Task<IActionResult> GetProduct([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference)
         {
-            // if(!_userValidationService.CheckAuthorizationToken(authorization)) {
-            //      return Unauthorized();
-            // }
-            
-            //  var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             ValidationOutput validationOutput;
-            
-            // if(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])) {
-                //  _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
-                 validationOutput = _productService.GetByReference(reference);
-            // }
-            // else if(await _userValidationService.Validate(authorization.Split(" ")[1]))
-            // {
-            //     _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
-            //      validationOutput = _productService.ClientGetByReference(reference);
-            // }
-            // else
-            // {
-            //     return Unauthorized();
-            // }
+
+            if (await _userValidationService.ValidateContentManager(authorization.Split(" ")[1]))
+            {
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _productService.GetByReference(reference);
+            }
+            else if (await _userValidationService.Validate(authorization.Split(" ")[1]))
+            {
+                _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+                validationOutput = _productService.ClientGetByReference(reference);
+            }
+            else
+            {
+                return Unauthorized();
+            }
 
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
                 {
-                    // _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Product Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Product Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
                     return BadRequest(validationOutput.FoundErrors);
                 }
 
                 if (validationOutput is ValidationOutputNotFound)
                 {
-                    // _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Product Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Product Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
                 }
 
-                // _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
                 return BadRequest("Type of validation output not recognized. Please contact your software provider.");
             }
             else
             {
-                // _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Product: {0}", ((ProductDto)validationOutput.DesiredReturn).ToString());
+                _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Product: {0}", ((ProductDto)validationOutput.DesiredReturn).ToString());
                 return Ok((ProductDto)validationOutput.DesiredReturn);
             }
         }
@@ -541,7 +697,7 @@ namespace MerryClosets.Controllers.Product
             //     return Unauthorized();
             // }
             // var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
-            
+
             ValidationOutput validationOutput = _productService.UpdateModelGroup(reference, dto);
             if (validationOutput.HasErrors())
             {
@@ -697,8 +853,48 @@ namespace MerryClosets.Controllers.Product
         /*
          * DELETE method that will delete the list of dimension values from the product with the passed reference.
          */
-        [HttpDelete("{reference}/dimension-values")]
-        public async Task<IActionResult> DeleteDimensionValues([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
+        // [HttpDelete("{reference}/dimension-values")]
+        // public async Task<IActionResult> DeleteDimensionValues([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<DimensionValuesDto> enumerableDimensionValuesDto)
+        // {
+        //     if (!_userValidationService.CheckAuthorizationToken(authorization))
+        //     {
+        //         return Unauthorized();
+        //     }
+        //     if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+        //     {
+        //         return Unauthorized();
+        //     }
+        //     var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
+        //     _logger.logInformation(userRef, LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
+        //     ValidationOutput validationOutput = _productService.DeleteVariousDimensionValues(reference, enumerableDimensionValuesDto);
+        //     if (validationOutput.HasErrors())
+        //     {
+        //         if (validationOutput is ValidationOutputBadRequest)
+        //         {
+        //             _logger.logCritical(userRef, LoggingEvents.DeleteBadRequest, "Deleting Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+        //             return BadRequest(validationOutput.FoundErrors);
+        //         }
+
+        //         if (validationOutput is ValidationOutputNotFound)
+        //         {
+        //             _logger.logCritical(userRef, LoggingEvents.DeleteNotFound, "Deleting Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+        //             return NotFound(validationOutput.FoundErrors);
+        //         }
+
+        //         _logger.logCritical(userRef, LoggingEvents.DeleteInternalError, "Type of validation output not recognized. Please contact your software provider.");
+        //         return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+        //     }
+        //     else
+        //     {
+        //         _logger.logInformation(userRef, LoggingEvents.DeleteNoContent, "Deleting Dimension Values From Product: {0}", EnumerableUtils.convert(enumerableDimensionValuesDto));
+        //         _logger.logInformation(userRef, LoggingEvents.HardDeleteOk, "Deleting Dimension Values From Product: {0}", EnumerableUtils.convert(enumerableDimensionValuesDto));
+        //         return NoContent();
+        //     }
+        // }
+
+        [HttpDelete("{productReference}/dimensions/{dimensionReference}")]
+        public async Task<IActionResult> DeleteDimensionValues([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string productReference, [FromRoute] string dimensionReference)
         {
             if (!_userValidationService.CheckAuthorizationToken(authorization))
             {
@@ -710,19 +906,19 @@ namespace MerryClosets.Controllers.Product
             }
             var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
 
-            _logger.logInformation(userRef, LoggingEvents.HardDeleteItem, "Deleting By Reference: {0}", reference);
-            ValidationOutput validationOutput = _productService.DeleteVariousDimensionValues(reference, enumerableDimensionValuesDto);
+            _logger.logInformation(userRef, LoggingEvents.HardDeleteItem, "Deleting DimensionValues By Reference: {0}", productReference);
+            ValidationOutput validationOutput = _productService.DeleteDimensionValues(productReference, dimensionReference);
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
                 {
-                    _logger.logCritical(userRef, LoggingEvents.DeleteBadRequest, "Deleting Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    _logger.logCritical(userRef, LoggingEvents.DeleteBadRequest, "Deleting DimensionValues Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
                     return BadRequest(validationOutput.FoundErrors);
                 }
 
                 if (validationOutput is ValidationOutputNotFound)
                 {
-                    _logger.logCritical(userRef, LoggingEvents.DeleteNotFound, "Deleting Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    _logger.logCritical(userRef, LoggingEvents.DeleteNotFound, "Deleting DimensionValues Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
                 }
 
@@ -731,10 +927,94 @@ namespace MerryClosets.Controllers.Product
             }
             else
             {
-                _logger.logInformation(userRef, LoggingEvents.DeleteNoContent, "Deleting Dimension Values From Product: {0}", EnumerableUtils.convert(enumerableDimensionValuesDto));
-                _logger.logInformation(userRef, LoggingEvents.HardDeleteOk, "Deleting Dimension Values From Product: {0}", EnumerableUtils.convert(enumerableDimensionValuesDto));
+                _logger.logInformation(userRef, LoggingEvents.DeleteNoContent, "Deleting Dimension Values From Product: {0}", dimensionReference);
+                _logger.logInformation(userRef, LoggingEvents.HardDeleteOk, "Deleting Dimension Values From Product: {0}", dimensionReference);
                 return NoContent();
             }
         }
+
+        //Talvez alterar!!!
+        [HttpDelete("{productReference}/dimensions/{dimensionReference}/dimensions-values")]
+        public async Task<IActionResult> DeleteValueElement([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string productReference, [FromRoute] string dimensionReference, [FromBody] DimensionValuesDto dimensionValuesDto)
+        {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
+            _logger.logInformation(userRef, LoggingEvents.HardDeleteItem, "Deleting Dimension Values By Reference: {0}", productReference);
+            ValidationOutput validationOutput = _productService.DeleteValueElement(productReference, dimensionReference, dimensionValuesDto);
+            if (validationOutput.HasErrors())
+            {
+                if (validationOutput is ValidationOutputBadRequest)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.DeleteBadRequest, "Deleting Dimension Values Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    return BadRequest(validationOutput.FoundErrors);
+                }
+
+                if (validationOutput is ValidationOutputNotFound)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.DeleteNotFound, "Deleting Dimension Values Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    return NotFound(validationOutput.FoundErrors);
+                }
+
+                _logger.logCritical(userRef, LoggingEvents.DeleteInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+            }
+            else
+            {
+                var desiredReturn = (DimensionValuesDto)validationOutput.DesiredReturn;
+                _logger.logInformation(userRef, LoggingEvents.DeleteNoContent, "Deleting Dimension Values From Product: {0} ", desiredReturn);
+                _logger.logInformation(userRef, LoggingEvents.HardDeleteOk, "Deleting Dimension Values From Product: {0}", desiredReturn);
+                return NoContent();
+            }
+        }
+
+        [HttpDelete("{productReference}/dimensions/{dimensionReference}/dimensions-algorithms")]
+        public async Task<IActionResult> DeleteDimensionAlgorithm([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string productReference, [FromRoute] string dimensionReference, [FromBody] DimensionAlgorithmDto dimensionAlgorithmDto)
+        {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+
+            _logger.logInformation(userRef, LoggingEvents.HardDeleteItem, "Deleting DimensionValues Algorithm By Reference: {0}", productReference);
+            ValidationOutput validationOutput = _productService.DeleteDimensionAlgorithm(productReference, dimensionReference, dimensionAlgorithmDto);
+            if (validationOutput.HasErrors())
+            {
+                if (validationOutput is ValidationOutputBadRequest)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.DeleteBadRequest, "Deleting DimensionValues Algorithm Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    return BadRequest(validationOutput.FoundErrors);
+                }
+
+                if (validationOutput is ValidationOutputNotFound)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.DeleteNotFound, "Deleting DimensionValues Algorithm Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    return NotFound(validationOutput.FoundErrors);
+                }
+
+                _logger.logCritical(userRef, LoggingEvents.DeleteInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+            }
+            else
+            {
+                var desiredReturn = (DimensionValuesDto)validationOutput.DesiredReturn;
+                _logger.logInformation(userRef, LoggingEvents.DeleteNoContent, "Deleting Dimension Values From Product: {0} ", desiredReturn);
+                _logger.logInformation(userRef, LoggingEvents.HardDeleteOk, "Deleting Dimension Values From Product: {0}", desiredReturn);
+                return NoContent();
+            }
+        }
+
     }
 }

@@ -48,7 +48,7 @@ namespace MerryClosets.Models.Product
          */
         public SlotDefinition SlotDefinition { get; set; }
 
-        public ModelGroup ModelGroup {get; set; }
+        public ModelGroup ModelGroup { get; set; }
 
         public Product(string reference, string name, string description, string categoryReference, Price price,
             List<Part> parts, List<ProductMaterial> productMaterialList, List<DimensionValues> dimensions,
@@ -221,6 +221,18 @@ namespace MerryClosets.Models.Product
                 }
             }
 
+            return null;
+        }
+
+        public DimensionValues GetDimensionValues(string reference)
+        {
+            foreach (var dimensionValue in this.Dimensions)
+            {
+                if (dimensionValue.Reference == reference)
+                {
+                    return dimensionValue;
+                }
+            }
             return null;
         }
     }

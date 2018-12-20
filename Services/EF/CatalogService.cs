@@ -275,7 +275,7 @@ namespace MerryClosets.Services.EF
             }
 
             validationOutput = new ValidationOutputForbidden();
-            if (dto.Reference != null)
+            if (dto.Reference != null && !dto.Reference.Equals(refer))
             {
                 validationOutput.AddError("Reference of catalog", "It's not allowed to update reference.");
                 return validationOutput;

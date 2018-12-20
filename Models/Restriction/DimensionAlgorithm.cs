@@ -5,13 +5,13 @@ using MerryClosets.Utils;
 
 namespace MerryClosets.Models.Restriction
 {
-    [JsonConverter(typeof(JsonSubtypes), "$type")]
-    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithm), RestrictionName.RATIO_ALGORITHM)]
+    [JsonConverter(typeof(JsonSubtypes), "type")]
+    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithm), Strings.RATIO_ALGORITHM)]
     public abstract class DimensionAlgorithm : Algorithm
     {
         //public abstract bool validate(ConfiguredDimension inputedDimensions);
         public static readonly List<string> AvailableDimensionAlgorithms =
-            new List<string>(new string[] {RestrictionName.RATIO_ALGORITHM});
+            new List<string>(new string[] {Strings.RATIO_ALGORITHM});
 
         public enum RestrictionType
         {

@@ -11,6 +11,5 @@ namespace MerryClosets.Services.Interfaces
         ValidationOutput DeleteConfiguredProducts(string reference, IEnumerable<ConfiguredProductDto> enumerableConfiguredProduct);
         
         ValidationOutput GetProductsCollection(string reference);
-        
     }
 }

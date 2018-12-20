@@ -5,11 +5,11 @@ using MerryClosets.Utils;
 namespace MerryClosets.Models.DTO
 {
     [JsonConverter(typeof(JsonSubtypes), "type")]
-    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithmDto), RestrictionName.MATERIAL_FINISH_PART_ALGORITHM)]
-    [JsonSubtypes.KnownSubType(typeof(MaterialPartAlgorithmDto), RestrictionName.MATERIAL_PART_ALGORITHM)]
-    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithmDto), RestrictionName.RATIO_ALGORITHM)]
-    [JsonSubtypes.KnownSubType(typeof(SizePartAlgorithmDto), RestrictionName.SIZE_PART_ALGORITHM)]
-    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithmDto), RestrictionName.SIZE_PERCENTAGE_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithmDto), Strings.MATERIAL_FINISH_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(MaterialPartAlgorithmDto), Strings.MATERIAL_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithmDto), Strings.RATIO_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(SizePartAlgorithmDto), Strings.SIZE_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithmDto), Strings.SIZE_PERCENTAGE_PART_ALGORITHM)]
     public abstract class AlgorithmDto : ValueObjectDto
     {
         public string type;

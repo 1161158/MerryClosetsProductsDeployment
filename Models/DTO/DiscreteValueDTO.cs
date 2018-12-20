@@ -11,7 +11,7 @@ namespace MerryClosets.Models.DTO
         public DiscreteValueDto(int value)
         {
             this.Value = value;
-            base.type = RestrictionName.DISCRETE_VALUE;
+            base.type = Strings.DISCRETE_VALUE;
         }
 
         protected DiscreteValueDto() { }

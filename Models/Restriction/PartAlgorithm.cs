@@ -5,9 +5,9 @@ using MerryClosets.Utils;
 
 namespace MerryClosets.Models.Restriction
 {
-    [JsonConverter(typeof(JsonSubtypes), "$type")]
-    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithm), RestrictionName.SIZE_PERCENTAGE_PART_ALGORITHM)]
-    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithm), RestrictionName.MATERIAL_FINISH_PART_ALGORITHM)]
+    [JsonConverter(typeof(JsonSubtypes), "type")]
+    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithm), Strings.SIZE_PERCENTAGE_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithm), Strings.MATERIAL_FINISH_PART_ALGORITHM)]
     public abstract class PartAlgorithm : Algorithm
     {
         //public abstract bool validate(Product.Product partProduct, List<ConfiguredProduct.ConfiguredProduct> configuredProductChildren);
@@ -15,8 +15,8 @@ namespace MerryClosets.Models.Restriction
         {
             "MaterialPartAlgorithm",
             "SizePartAlgorithm",
-            RestrictionName.MATERIAL_FINISH_PART_ALGORITHM,
-            RestrictionName.SIZE_PERCENTAGE_PART_ALGORITHM
+            Strings.MATERIAL_FINISH_PART_ALGORITHM,
+            Strings.SIZE_PERCENTAGE_PART_ALGORITHM
         });
 
         public enum RestrictionType

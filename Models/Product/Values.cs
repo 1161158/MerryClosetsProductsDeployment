@@ -4,9 +4,9 @@ using MerryClosets.Utils;
 
 namespace MerryClosets.Models.Product
 {
-    [JsonConverter(typeof(JsonSubtypes))]
-    [JsonSubtypes.KnownSubType(typeof(DiscreteValue), RestrictionName.DISCRETE_VALUE)]
-    [JsonSubtypes.KnownSubType(typeof(ContinuousValue), RestrictionName.CONTINUOUS_VALUE)]
+    [JsonConverter(typeof(JsonSubtypes), "type")]
+    [JsonSubtypes.KnownSubType(typeof(DiscreteValue), Strings.DISCRETE_VALUE)]
+    [JsonSubtypes.KnownSubType(typeof(ContinuousValue), Strings.CONTINUOUS_VALUE)]
     public abstract class Values : ValueObject
     {
         public abstract bool IsValid(int value);

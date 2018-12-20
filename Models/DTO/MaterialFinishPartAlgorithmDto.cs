@@ -7,7 +7,7 @@ namespace MerryClosets.Models.DTO
 
         public MaterialFinishPartAlgorithmDto(){
             //This algorithm requires no arguments
-            base.type = RestrictionName.MATERIAL_FINISH_PART_ALGORITHM;
+            base.type = Strings.MATERIAL_FINISH_PART_ALGORITHM;
         }
     }
 }

@@ -6,12 +6,12 @@ using MerryClosets.Utils;
 
 namespace MerryClosets.Models.Restriction
 {
-    [JsonConverter(typeof(JsonSubtypes), "$type")]
-    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithm), RestrictionName.MATERIAL_FINISH_PART_ALGORITHM)]
-    [JsonSubtypes.KnownSubType(typeof(MaterialPartAlgorithm), RestrictionName.MATERIAL_PART_ALGORITHM)]
-    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithm), RestrictionName.RATIO_ALGORITHM)]
-    [JsonSubtypes.KnownSubType(typeof(SizePartAlgorithm), RestrictionName.SIZE_PART_ALGORITHM)]
-    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithm), RestrictionName.SIZE_PERCENTAGE_PART_ALGORITHM)]
+    [JsonConverter(typeof(JsonSubtypes), "type")]
+    [JsonSubtypes.KnownSubType(typeof(MaterialFinishPartAlgorithm), Strings.MATERIAL_FINISH_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(MaterialPartAlgorithm), Strings.MATERIAL_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(RatioAlgorithm), Strings.RATIO_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(SizePartAlgorithm), Strings.SIZE_PART_ALGORITHM)]
+    [JsonSubtypes.KnownSubType(typeof(SizePercentagePartAlgorithm), Strings.SIZE_PERCENTAGE_PART_ALGORITHM)]
     public abstract class Algorithm : ValueObject
     {
         public abstract bool validate(Dictionary<string, object> parameters);
