@@ -654,8 +654,20 @@ namespace MerryClosets.Services.EF
                 }
 
             }
+            var category_products = new List<CategoryProductDto>();
+            foreach(var product in productsAvailableFinal){
+                var categoryName = _categoryRepository.GetByReference(product.CategoryReference).Name;
+                CategoryProductDto cpd = new CategoryProductDto(categoryName);
+                if(!category_products.Contains(cpd)){
+                    cpd.Products.Add(product);
+                    category_products.Add(cpd);
+                } else {
+                    int index = category_products.IndexOf(cpd);
+                    category_products[index].Products.Add(product);
+                }
+            }
 
-            validationOutput.DesiredReturn = productsAvailableFinal;
+            validationOutput.DesiredReturn = category_products;
             return validationOutput;
         }
 
@@ -683,7 +695,7 @@ namespace MerryClosets.Services.EF
                 if (value is DiscreteValue)
                 {
                     var newValue = (DiscreteValue)value;
-                    if (newValue.Value == dimension)
+                    if (newValue.Value <= dimension)
                     {
                         return true;
                     }
@@ -691,7 +703,7 @@ namespace MerryClosets.Services.EF
                 else if (value is ContinuousValue)
                 {
                     var newValue = (ContinuousValue)value;
-                    if (dimension >= newValue.MinValue && dimension >= newValue.MaxValue)
+                    if (dimension >= newValue.MinValue)
                     {
                         return true;
                     }

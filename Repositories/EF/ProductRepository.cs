@@ -18,6 +18,7 @@ namespace MerryClosets.Repositories.EF
             .Include(p => p.Parts).ThenInclude(part => part.Algorithms)
             .Include(p => p.SlotDefinition)
             .Include(p => p.ProductMaterialList)
+            .Include(p => p.Dimensions)
             .Include(p => p.Dimensions).ThenInclude(sizes => sizes.PossibleWidths)
             .Include(p => p.Dimensions).ThenInclude(sizes => sizes.PossibleHeights)
             .Include(p => p.Dimensions).ThenInclude(sizes => sizes.PossibleDepths)
@@ -43,8 +44,24 @@ namespace MerryClosets.Repositories.EF
 
         public override List<Product> List() {
             return base.GetActiveQueryable().Include(p => p.Price)
+            .Include(p => p.Dimensions)
+            .Include(p => p.Dimensions).ThenInclude(p => p.Algorithms)
+            .Include(p => p.Dimensions).ThenInclude(p => p.PossibleDepths)
+            .Include(p => p.Dimensions).ThenInclude(p => p.PossibleHeights)
+            .Include(p => p.Dimensions).ThenInclude(p => p.PossibleWidths)
             .Include(p => p.SlotDefinition)
             .Include(p => p.ProductMaterialList).ToList();
+        }
+        
+        public List<Product> ListStructures()
+        {
+            return base.GetActiveQueryable().Include(p => p.Price)
+                .Include(p => p.SlotDefinition)
+                .Include(p => p.Dimensions).ThenInclude(sizes => sizes.PossibleWidths)
+                .Include(p => p.Dimensions).ThenInclude(sizes => sizes.PossibleHeights)
+                .Include(p => p.Dimensions).ThenInclude(sizes => sizes.PossibleDepths)
+                .Include(p => p.Price)
+                .Include(p => p.ProductMaterialList).ToList();
         }
     }
 }

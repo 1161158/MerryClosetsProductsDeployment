@@ -85,17 +85,17 @@ namespace MerryClosets.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllConfiguredProducts([FromHeader(Name="Authorization")] string authorization)
         {
-            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
-                return Unauthorized();
-            }
-            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
-                return Unauthorized();
-            }
+            // if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+            //     return Unauthorized();
+            // }
+            // if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+            //     return Unauthorized();
+            // }
             
-            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            // var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
             IEnumerable<ConfiguredProductDto> list = _configuredProductService.GetAll();
-            _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Configured Products: {0}", EnumerableUtils.convert(list));
+            // _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Configured Products: {0}", EnumerableUtils.convert(list));
             return Ok(list);
         }
 
@@ -191,40 +191,40 @@ namespace MerryClosets.Controllers
         }
 
         [HttpGet("{reference}/available-products")]
-        public async Task<ActionResult> GetAvailableProducts([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
+        public async Task<ActionResult> GetAvailableProducts(/* [FromHeader(Name="Authorization")] string authorization, */ [FromRoute] string reference)
         {
-            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
-                return Unauthorized();
-            }
-            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
-                return Unauthorized();
-            }
+            // if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+            //     return Unauthorized();
+            // }
+            // if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+            //     return Unauthorized();
+            // }
             
-            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            // var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
-            _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting Available Products By Reference: {0}", reference);
+            // _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting Available Products By Reference: {0}", reference);
             ValidationOutput validationOutput = _configuredProductService.GetAvailableProducts(reference);
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
                 {
-                    _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Available Products Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    // _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Available Products Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
                     return BadRequest(validationOutput.FoundErrors);
                 }
 
                 if (validationOutput is ValidationOutputNotFound)
                 {
-                    _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Available Products Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    // _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Available Products Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
                 }
 
-                _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                // _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
                 return BadRequest("Type of validation output not recognized. Please, contact your software provider.");
             }
             else
             {
-                _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Available Products: {0}", reference);
-                return Ok((List<ProductDto>)validationOutput.DesiredReturn);
+                // _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Available Products: {0}", reference);
+                return Ok((List<CategoryProductDto>)validationOutput.DesiredReturn);
             }
         }
 

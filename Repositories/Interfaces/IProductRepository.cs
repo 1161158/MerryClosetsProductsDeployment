@@ -7,5 +7,6 @@ namespace MerryClosets.Repositories.Interfaces
     {
         List<Product> ProductsOfCategory(string catRefer);
         List<Product> ProductsAndParts();
+        List<Product> ListStructures();
     }
 }

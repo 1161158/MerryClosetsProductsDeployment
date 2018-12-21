@@ -185,21 +185,24 @@ namespace MerryClosets.Services.EF
                     foreach (var productHeights in productDimension.PossibleHeights)
                     {
                         validateHeight = Validate(partDimension.PossibleHeights, productHeights);
-                        if(validateHeight){
+                        if (validateHeight)
+                        {
                             break;
                         }
                     }
                     foreach (var productWidths in productDimension.PossibleWidths)
                     {
                         validateWidth = Validate(partDimension.PossibleWidths, productWidths);
-                        if(validateWidth){
+                        if (validateWidth)
+                        {
                             break;
                         }
                     }
                     foreach (var productDepths in productDimension.PossibleDepths)
                     {
                         validateDepth = Validate(partDimension.PossibleDepths, productDepths);
-                        if(validateDepth){
+                        if (validateDepth)
+                        {
                             break;
                         }
                     }
@@ -460,7 +463,7 @@ namespace MerryClosets.Services.EF
                 return validationOutput;
             }
 
-            if (dto.ProductMaterialList!= null && dto.ProductMaterialList.Count > 0)
+            if (dto.ProductMaterialList != null && dto.ProductMaterialList.Count > 0)
             {
                 validationOutput = VerifyMaterialsAndRespectiveAlgorithms(dto);
                 if (validationOutput.HasErrors())
@@ -478,7 +481,7 @@ namespace MerryClosets.Services.EF
                 }
             }
 
-            if (dto.Dimensions!= null && dto.Dimensions.Count > 0)
+            if (dto.Dimensions != null && dto.Dimensions.Count > 0)
             {
                 validationOutput = VerifyVariousDimensionValues(dto);
                 if (validationOutput.HasErrors())
@@ -562,7 +565,7 @@ namespace MerryClosets.Services.EF
 
             return productDtoList;
         }
-        
+
         /**
          * Method that will return all products present in the system, each in the form of a DTO OR all the errors found when trying to do so.
          *
@@ -572,7 +575,7 @@ namespace MerryClosets.Services.EF
         public IEnumerable<ProductDto> GetAllStructure()
         {
             List<ProductDto> productDtoList = new List<ProductDto>();
-            List<Product> productList = _productRepository.List();
+            List<Product> productList = _productRepository.ListStructures();
 
             //For-each just to convert each Product object into a ProductDto object
             foreach (var product in productList)
@@ -1214,38 +1217,40 @@ namespace MerryClosets.Services.EF
             }
 
             //3.
-            validationOutput = _dimensionValuesDTOValidator.DTOIsValid(dimensionValuesDto);
+            validationOutput = AddDimensions(productToModify, dimensionValues, dimensionValuesDto);
             if (validationOutput.HasErrors())
             {
                 return validationOutput;
             }
 
-            //Algorithm
-            List<DimensionAlgorithmDto>
-                dimensionAlgorithmDtoList =
-                    new List<DimensionAlgorithmDto>(); //Serves no purpose other than to assert if there are duplicates
-            foreach (var dimensionAlgorithmDto in dimensionValuesDto.Algorithms)
+            if (dimensionValuesDto.Algorithms != null && dimensionValuesDto.Algorithms.Count > 0)
             {
-                //5.
-                validationOutput = _algorithmDTOValidator.DTOIsValid(dimensionAlgorithmDto);
-                if (validationOutput.HasErrors())
+                //Algorithm
+                List<DimensionAlgorithmDto>
+                    dimensionAlgorithmDtoList =
+                        new List<DimensionAlgorithmDto>(); //Serves no purpose other than to assert if there are duplicates
+                foreach (var dimensionAlgorithmDto in dimensionValuesDto.Algorithms)
                 {
-                    return validationOutput;
-                }
+                    //5.
+                    validationOutput = _algorithmDTOValidator.DTOIsValid(dimensionAlgorithmDto);
+                    if (validationOutput.HasErrors())
+                    {
+                        return validationOutput;
+                    }
 
-                //6.
-                validationOutput = new ValidationOutputBadRequest();
-                if (dimensionAlgorithmDtoList.Contains(dimensionAlgorithmDto))
-                {
-                    validationOutput.AddError("Dimension algorithm",
-                        "A dimension algorithm between a set of dimension values and the product'" + reference +
-                        "' is duplicated.");
-                    return validationOutput;
-                }
+                    //6.
+                    validationOutput = new ValidationOutputBadRequest();
+                    if (dimensionAlgorithmDtoList.Contains(dimensionAlgorithmDto))
+                    {
+                        validationOutput.AddError("Dimension algorithm",
+                            "A dimension algorithm between a set of dimension values and the product'" + reference +
+                            "' is duplicated.");
+                        return validationOutput;
+                    }
 
-                dimensionAlgorithmDtoList.Add(dimensionAlgorithmDto);
+                    dimensionAlgorithmDtoList.Add(dimensionAlgorithmDto);
+                }
             }
-
             productToModify.AddDimensionValues(dimensionValues);
             _productRepository.Update(productToModify);
             validationOutput.DesiredReturn = dimensionValues;
@@ -1279,6 +1284,20 @@ namespace MerryClosets.Services.EF
             }
 
             //List
+            validationOutput = AddDimensions(productToModify, dimensionValues, dimensionValuesDto);
+            if (validationOutput.HasErrors())
+            {
+                return validationOutput;
+            }
+
+            _productRepository.Update(productToModify);
+            validationOutput.DesiredReturn = dimensionValuesDto;
+            return validationOutput;
+        }
+
+        private ValidationOutput AddDimensions(Product productToModify, DimensionValues dimensionValues, DimensionValuesDto dimensionValuesDto)
+        {
+            ValidationOutput validationOutput = new ValidationOutputBadRequest();
             if (dimensionValues.PossibleHeights != null && dimensionValues.PossibleHeights.Count > 0)
             {
                 validationOutput = _dimensionValuesDTOValidator.PossibleHeightsIsValid(dimensionValuesDto);
@@ -1340,10 +1359,8 @@ namespace MerryClosets.Services.EF
                     return validationOutput;
                 }
             }
-
-            _productRepository.Update(productToModify);
-            validationOutput.DesiredReturn = dimensionValuesDto;
             return validationOutput;
+
         }
 
         //Espera-se que o producto já tenha a dimensionValuesDto
