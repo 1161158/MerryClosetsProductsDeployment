@@ -29,8 +29,8 @@ namespace MerryClosets
 
             int chosenDB = Configuration.GetValue("ChosenDB", 0);
             DataConfiguration.configure((DataProviderEnum)chosenDB, Configuration, services);
-            DtoValidatorConfiguration.configure(Configuration, services);
             ServiceConfiguration.configure(Configuration, services);
+            DtoValidatorConfiguration.configure(Configuration, services);
             AbstractClassConfiguration.configure();
             services.AddCors();
             services.AddMvc();

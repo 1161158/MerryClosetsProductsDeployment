@@ -6,16 +6,18 @@ namespace MerryClosets.Models.ConfiguredProduct
     public class ConfiguredProduct : BaseEntity
     {
         public string ProductReference { get; set; }
+        public string Description { get; set; }
         public ConfiguredMaterial ConfiguredMaterial { get; set; }
         public List<ConfiguredPart> Parts { get; set; } = new List<ConfiguredPart>();
         public ConfiguredDimension ConfiguredDimension { get; set; }
         public List<ConfiguredSlot> ConfiguredSlots { get; set; } = new List<ConfiguredSlot>();
         public Price Price { get; set; }
 
-        public ConfiguredProduct(string productReference, string reference, ConfiguredMaterial material,
+        public ConfiguredProduct(string productReference, string reference, string description, ConfiguredMaterial material,
             ConfiguredDimension dimension, List<ConfiguredSlot> configuredSlots, Price price)
         {
             this.Reference = reference;
+            this.Description = description;
             this.ProductReference = productReference;
             this.ConfiguredDimension = dimension;
             this.ConfiguredSlots = configuredSlots;
@@ -23,10 +25,11 @@ namespace MerryClosets.Models.ConfiguredProduct
             this.Price = price;
         }
 
-        public ConfiguredProduct(string productReference, string reference, ConfiguredMaterial material,
+        public ConfiguredProduct(string productReference, string reference, string description, ConfiguredMaterial material,
             ConfiguredDimension dimension, List<ConfiguredPart> parts, List<ConfiguredSlot> configuredSlots)
         {
             this.Reference = reference;
+            this.Description = description;
             this.ProductReference = productReference;
             this.Parts = parts;
             this.ConfiguredDimension = dimension;
@@ -38,6 +41,19 @@ namespace MerryClosets.Models.ConfiguredProduct
         {
         }
 
+        public bool Contains(string reference)
+        {
+            foreach (var configuredPart in this.Parts)
+            {
+                if (configuredPart.ConfiguredChildReference == reference)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        
         public override bool Equals(object obj)
         {
             if ((obj == null) || this.GetType() != obj.GetType())

@@ -233,7 +233,9 @@ namespace MerryClosets.Models.Product
                     return dimensionValue;
                 }
             }
-            return null;
+            var dimension = new DimensionValues(new List<Values>(), new List<Values>(), new List<Values>(), reference);
+            this.Dimensions.Add(dimension);
+            return dimension;
         }
     }
 }

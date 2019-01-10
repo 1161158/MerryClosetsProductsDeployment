@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using MerryClosets.Models.ConfiguredProduct;
 using MerryClosets.Models.DTO;
 
@@ -7,5 +8,6 @@ namespace MerryClosets.Services.Interfaces
     {
         ValidationOutput GetAllInfoByReference(string reference);
         ValidationOutput GetAvailableProducts(string reference);
+        IEnumerable<ConfiguredProductDto> GetAvailableToCollections();
     }
 }

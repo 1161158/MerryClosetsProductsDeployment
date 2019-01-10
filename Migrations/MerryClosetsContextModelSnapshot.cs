@@ -241,6 +241,8 @@ namespace MerryClosets.Migrations
 
                     b.Property<long?>("ConfiguredMaterialId");
 
+                    b.Property<string>("Description");
+
                     b.Property<bool>("IsActive");
 
                     b.Property<long?>("PriceId");
@@ -341,6 +343,8 @@ namespace MerryClosets.Migrations
 
                     b.Property<string>("Reference");
 
+                    b.Property<string>("RelativeURL");
+
                     b.Property<long>("Version");
 
                     b.HasKey("Id");
@@ -355,6 +359,8 @@ namespace MerryClosets.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<long?>("ProductId");
+
+                    b.Property<string>("Reference");
 
                     b.HasKey("Id");
 

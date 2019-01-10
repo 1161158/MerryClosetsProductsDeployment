@@ -30,5 +30,6 @@ namespace MerryClosets.Services.Interfaces
         ValidationOutput DeleteDimensionValues(string productReference, string dimensionReference);
         ValidationOutput DeleteValueElement(string reference, string dimensionReference, DimensionValuesDto dimensionValuesDto);
         ValidationOutput DeleteDimensionAlgorithm(string productReference, string dimensionReference, DimensionAlgorithmDto dimensionAlgorithmDto);
+        ValidationOutput GetProductsParts(string reference);
     }
 }

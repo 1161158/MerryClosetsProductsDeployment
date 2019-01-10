@@ -341,12 +341,14 @@ namespace MerryClosets.Services.EF
             }
             var catalog = _catalogRepository.GetByReference(reference);
 
-            List<ProductCollectionDto> returnList = new List<ProductCollectionDto>();
+            List<ConfiguredProductCollectionDto> returnList = new List<ConfiguredProductCollectionDto>();
 
             foreach (var catalogProductCollection in catalog.CatalogProductCollectionList)
             {
                 var productCollection = catalogProductCollection.ProductCollection;
-                returnList.Add(_mapper.Map<ProductCollectionDto>(productCollection));
+                var collection = _mapper.Map<CollectionDto>(_collectionRepository.GetByReference(productCollection.CollectionReference));
+                var confProduct = _mapper.Map<ConfiguredProductDto>(_configuredProductRepository.GetByReference(productCollection.ConfiguredProductReference));
+                returnList.Add(new ConfiguredProductCollectionDto(confProduct, collection));
             }
             validationOutput.DesiredReturn = returnList;
             return validationOutput;

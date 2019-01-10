@@ -340,43 +340,43 @@ namespace MerryClosets.Controllers.Material
          * GET method that will return the material with the given reference.
          */
         [HttpGet("{reference}", Name = "GetMaterial")]
-        public async Task<IActionResult> GetMaterial([FromHeader(Name="Authorization")] string authorization, [FromRoute] string reference)
+        public async Task<IActionResult> GetMaterial(/* [FromHeader(Name="Authorization")] string authorization,  */[FromRoute] string reference)
         {
-            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
-                return Unauthorized();
-            }
-            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
-                return Unauthorized();
-            }
+            // if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+            //     return Unauthorized();
+            // }
+            // if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+            //     return Unauthorized();
+            // }
             
-            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            // var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
             
-            _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+            // _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
             ValidationOutput validationOutput = _materialService.GetByReference(reference);
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
                 {
-                    _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Material Failed: {0}",
-                        ((ValidationOutputBadRequest) validationOutput).ToString());
+                    // _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Material Failed: {0}",
+                        // ((ValidationOutputBadRequest) validationOutput).ToString());
                     return BadRequest(validationOutput.FoundErrors);
                 }
 
                 if (validationOutput is ValidationOutputNotFound)
                 {
-                    _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Material Failed: {0}",
-                        ((ValidationOutputNotFound) validationOutput).ToString());
+                    // _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Material Failed: {0}",
+                        // ((ValidationOutputNotFound) validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
                 }
 
-                _logger.logCritical(userRef, LoggingEvents.GetItemInternalError,
-                    "Type of validation output not recognized. Please contact your software provider.");
+                // _logger.logCritical(userRef, LoggingEvents.GetItemInternalError,
+                    // "Type of validation output not recognized. Please contact your software provider.");
                 return BadRequest("Type of validation output not recognized. Please contact your software provider.");
             }
             else
             {
-                _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Material: {0}",
-                    ((MaterialDto) validationOutput.DesiredReturn).ToString());
+                // _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Material: {0}",
+                    // ((MaterialDto) validationOutput.DesiredReturn).ToString());
                 return Ok((MaterialDto) validationOutput.DesiredReturn);
             }
         }

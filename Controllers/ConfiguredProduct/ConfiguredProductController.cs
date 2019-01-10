@@ -98,6 +98,26 @@ namespace MerryClosets.Controllers
             // _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Configured Products: {0}", EnumerableUtils.convert(list));
             return Ok(list);
         }
+        
+        /**
+         * GET method that will return all existent configured products in the system.
+         */
+        [HttpGet("0/available-to-collections")]
+        public async Task<IActionResult> GetAllConfiguredProductsAvailableToCollections([FromHeader(Name="Authorization")] string authorization)
+        {
+            if(!_userValidationService.CheckAuthorizationToken(authorization)) {
+                return Unauthorized();
+            }
+            if(!(await _userValidationService.Validate(authorization.Split(" ")[1]))) {
+                return Unauthorized();
+            }
+            
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            
+            IEnumerable<ConfiguredProductDto> list = _configuredProductService.GetAvailableToCollections();
+            _logger.logInformation(userRef, LoggingEvents.GetAllOk, "Getting All Configured Products: {0}", EnumerableUtils.convert(list));
+            return Ok(list);
+        }
 
         /**
          * GET method that will return the category with the given reference.

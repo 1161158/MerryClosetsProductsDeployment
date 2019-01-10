@@ -237,7 +237,9 @@ namespace MerryClosets.Services.EF
                 }
                 else
                 {
-                    return ((DiscreteValue)productValue).Value >= ((ContinuousValue)partValue).MinValue && ((DiscreteValue)productValue).Value <= ((ContinuousValue)partValue).MaxValue;
+                    //Está mal
+                    //return ((DiscreteValue)productValue).Value >= ((ContinuousValue)partValue).MinValue && ((DiscreteValue)productValue).Value <= ((ContinuousValue)partValue).MaxValue;
+                    return ((DiscreteValue)productValue).Value >= ((ContinuousValue)partValue).MinValue;
                 }
             }
             else
@@ -248,7 +250,9 @@ namespace MerryClosets.Services.EF
                 }
                 else
                 {
-                    return !(((ContinuousValue)partValue).MinValue > ((ContinuousValue)productValue).MaxValue || ((ContinuousValue)partValue).MaxValue < ((ContinuousValue)productValue).MinValue);
+                    //Está mal
+                    //return !(((ContinuousValue)partValue).MinValue > ((ContinuousValue)productValue).MaxValue || ((ContinuousValue)partValue).MaxValue < ((ContinuousValue)productValue).MinValue);
+                    return ((ContinuousValue)partValue).MinValue < ((ContinuousValue)productValue).MaxValue;
                 }
             }
         }
@@ -1251,7 +1255,7 @@ namespace MerryClosets.Services.EF
                     dimensionAlgorithmDtoList.Add(dimensionAlgorithmDto);
                 }
             }
-            productToModify.AddDimensionValues(dimensionValues);
+
             _productRepository.Update(productToModify);
             validationOutput.DesiredReturn = dimensionValues;
             return validationOutput;
@@ -1952,6 +1956,27 @@ namespace MerryClosets.Services.EF
             }
             desiredProduct.ModelGroup = _mapper.Map<ModelGroup>(dto);
             validationOutput.DesiredReturn = _mapper.Map<ProductDto>(_productRepository.Update(desiredProduct));
+            return validationOutput;
+        }
+
+        public ValidationOutput GetProductsParts(string reference)
+        {
+            ValidationOutput validationOutput = new ValidationOutputNotFound();
+            if (!ProductExists(reference))
+            {
+                validationOutput.AddError("Reference of product",
+                    "No product with the reference '" + reference + "' exists in the system.");
+                return validationOutput;
+            }
+    
+            var product = _productRepository.GetByReference(reference);
+            var products = new List<ProductDto>();
+            foreach(var part in product.Parts){
+                var productToAdd = _productRepository.GetByReference(part.ProductReference);
+                products.Add(_mapper.Map<ProductDto>(productToAdd));
+            }
+
+            validationOutput.DesiredReturn = products;
             return validationOutput;
         }
     }

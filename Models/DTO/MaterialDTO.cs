@@ -13,13 +13,15 @@ namespace MerryClosets.Models.DTO
         public List<ColorDto> Colors { get; set; } = new List<ColorDto>();
 
         public List<FinishDto> Finishes { get; set; } = new List<FinishDto>();
+        public string RelativeURL {get; set; }
 
-        public MaterialDto(string reference, string name, string description, PriceDto price)
+        public MaterialDto(string reference, string name, string description, PriceDto price, string relativeURL)
         {
             this.Reference = reference;
             this.Description = description;
             this.Name = name;
             this.Price = price;
+            this.RelativeURL = relativeURL;
         }
 
         public MaterialDto(string reference, string name, string description, PriceDto price, List<ColorDto> colors, List<FinishDto> finishes)

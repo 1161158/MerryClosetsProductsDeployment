@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Transactions;
 using MerryClosets.Models.ConfiguredProduct;
 using MerryClosets.Models.Product;
 using MerryClosets.Repositories.EF;
@@ -12,7 +14,7 @@ namespace MerryClosets.Repositories.EF
 
     public class ConfiguredProductRepository : EfRepository<ConfiguredProduct>, IConfiguredProductRepository
     {
-
+        
         public ConfiguredProductRepository(MerryClosetsContext dbContext) : base(dbContext)
         {
         }
@@ -40,13 +42,51 @@ namespace MerryClosets.Repositories.EF
 
         public override List<ConfiguredProduct> List()
         {
-            return base.GetActiveQueryable().Include(p => p.Price).ToList();
+            return base.GetActiveQueryable()
+            .Include(p => p.Price)
+            .Include(cp => cp.ConfiguredDimension).ToList();
         }
 
         public int ConfiguredProductsLenght()
         {
             List<ConfiguredProduct> configuredProducts = this.GetQueryable().ToList();
             return configuredProducts.Count;
+        }
+
+        public List<ConfiguredProduct> GetAvailablesToCollection()
+        {
+            var list = base.GetActiveQueryable()
+                .Include(cp => cp.ConfiguredMaterial)
+                .Include(cp => cp.Parts)
+                .Include(cp => cp.ConfiguredSlots)
+                .Include(p => p.Price)
+                .Include(cp => cp.ConfiguredDimension)
+                .Include(p => p.Parts).ToList();
+            var configuredProductList = new List<ConfiguredProduct>();
+            var exists = new List<bool>();
+            foreach (var configuredProduct in list)
+            {
+                exists = new List<bool>();
+                foreach (var parent in list)
+                {
+                    if (!parent.Contains(configuredProduct.Reference))
+                    {
+                        exists.Add(false);
+                    }
+                    else
+                    {
+                        exists.Add(true);
+                    }
+                }
+
+                if (!exists.Contains(true))
+                {
+                    configuredProductList.Add(configuredProduct);
+                }
+                
+            }
+
+            return configuredProductList;
         }
 
         // public ConfiguredProduct GetByProductId(long id){

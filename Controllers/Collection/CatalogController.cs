@@ -243,7 +243,7 @@ namespace MerryClosets.Controllers
             }
             else
             {
-                IEnumerable<ProductCollectionDto> list = (List<ProductCollectionDto>) validationOutput.DesiredReturn;
+                IEnumerable<ConfiguredProductCollectionDto> list = (List<ConfiguredProductCollectionDto>) validationOutput.DesiredReturn;
                 _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting ProductsCollection: {0}", (EnumerableUtils.convert(list)));
                 return Ok(list);
             }

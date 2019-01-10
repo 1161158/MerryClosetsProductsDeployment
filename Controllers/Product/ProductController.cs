@@ -131,41 +131,41 @@ namespace MerryClosets.Controllers.Product
         [HttpPost("{reference}/parts")]
         public async Task<IActionResult> AddParts([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference, [FromBody] IEnumerable<PartDto> enumerablePartDto)
         {
-            // if (!_userValidationService.CheckAuthorizationToken(authorization))
-            // {
-            //     return Unauthorized();
-            // }
-            // if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
-            // {
-            //     return Unauthorized();
-            // }
-            // var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+            if (!(await _userValidationService.ValidateContentManager(authorization.Split(" ")[1])))
+            {
+                return Unauthorized();
+            }
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
 
             object[] array = new object[2];
             array[0] = reference;
             array[1] = EnumerableUtils.convert(enumerablePartDto);
-            // _logger.logInformation(userRef, LoggingEvents.PostItem, "Adding Parts By Reference: {0} -- {1}", array);
+            _logger.logInformation(userRef, LoggingEvents.PostItem, "Adding Parts By Reference: {0} -- {1}", array);
             ValidationOutput validationOutput = _productService.AddProductsAndRespectiveAlgorithms(reference, enumerablePartDto);
             if (validationOutput.HasErrors())
             {
                 if (validationOutput is ValidationOutputBadRequest)
                 {
-                    // _logger.logCritical(userRef, LoggingEvents.PostBadRequest, "Adding Parts Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    _logger.logCritical(userRef, LoggingEvents.PostBadRequest, "Adding Parts Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
                     return BadRequest(validationOutput.FoundErrors);
                 }
 
                 if (validationOutput is ValidationOutputNotFound)
                 {
-                    // _logger.logCritical(userRef, LoggingEvents.PostNotFound, "Adding Parts Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    _logger.logCritical(userRef, LoggingEvents.PostNotFound, "Adding Parts Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
                     return NotFound(validationOutput.FoundErrors);
                 }
 
-                // _logger.logCritical(userRef, LoggingEvents.PostInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                _logger.logCritical(userRef, LoggingEvents.PostInternalError, "Type of validation output not recognized. Please contact your software provider.");
                 return BadRequest("Type of validation output not recognized. Please contact your software provider.");
             }
             else
             {
-                // _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Parts to Product Succeeded: {0}", array[1]);
+                _logger.logInformation(userRef, LoggingEvents.PostOk, "Adding Parts to Product Succeeded: {0}", array[1]);
                 return Ok(validationOutput.DesiredReturn);
 
             }
@@ -1011,6 +1011,45 @@ namespace MerryClosets.Controllers.Product
                 _logger.logInformation(userRef, LoggingEvents.DeleteNoContent, "Deleting Dimension Values From Product: {0} ", desiredReturn);
                 _logger.logInformation(userRef, LoggingEvents.HardDeleteOk, "Deleting Dimension Values From Product: {0}", desiredReturn);
                 return NoContent();
+            }
+        }
+
+        [HttpGet("{reference}/products")]
+        public async Task<IActionResult> GetProductsParts([FromHeader(Name = "Authorization")] string authorization, [FromRoute] string reference)
+        {
+            if (!_userValidationService.CheckAuthorizationToken(authorization))
+            {
+                return Unauthorized();
+            }
+
+            var userRef = await _userValidationService.GetUserRef(authorization.Split(" ")[1]);
+            ValidationOutput validationOutput;
+
+            _logger.logInformation(userRef, LoggingEvents.GetItem, "Getting By Reference: {0}", reference);
+            validationOutput = _productService.GetProductsParts(reference);
+
+            if (validationOutput.HasErrors())
+            {
+                if (validationOutput is ValidationOutputBadRequest)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.GetItemBadRequest, "Getting Parts Product Failed: {0}", ((ValidationOutputBadRequest)validationOutput).ToString());
+                    return BadRequest(validationOutput.FoundErrors);
+                }
+
+                if (validationOutput is ValidationOutputNotFound)
+                {
+                    _logger.logCritical(userRef, LoggingEvents.GetItemNotFound, "Getting Parts Product Failed: {0}", ((ValidationOutputNotFound)validationOutput).ToString());
+                    return NotFound(validationOutput.FoundErrors);
+                }
+
+                _logger.logCritical(userRef, LoggingEvents.GetItemInternalError, "Type of validation output not recognized. Please contact your software provider.");
+                return BadRequest("Type of validation output not recognized. Please contact your software provider.");
+            }
+            else
+            {
+                var list = (List<ProductDto>)validationOutput.DesiredReturn;
+                _logger.logInformation(userRef, LoggingEvents.GetItemOk, "Getting Products: {0}", EnumerableUtils.convert(list));
+                return Ok(list);
             }
         }
 

@@ -26,12 +26,15 @@ namespace MerryClosets.Models.Material
          */
         public List<Finish> Finishes { get; set; } = new List<Finish>();
 
-        public Material(string reference, string name, string description, Price price)
+        public string RelativeURL {get; set; }
+
+        public Material(string reference, string name, string description, Price price, string relativeURL)
         {
             this.Reference = reference;
             this.Description = description;
             this.Name = name;
             this.Price = price;
+            this.RelativeURL = relativeURL;
         }
 
         public Material(string reference, string name, string description, Price price, List<Color> colors, List<Finish> finishes)

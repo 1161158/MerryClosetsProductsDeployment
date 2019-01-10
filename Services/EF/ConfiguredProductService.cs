@@ -475,13 +475,17 @@ namespace MerryClosets.Services.EF
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
             if (configuredDto == null)
             {
-                validationOutput.AddError("ConfiguredProduct", "Null reference.");
+                validationOutput.AddError("ConfiguredProduct", "Null configured product.");
                 return validationOutput;
             }
 
-            var lastRef = _configuredProductRepository.ConfiguredProductsLenght();
-            lastRef++;
-            configuredDto.Reference = "confPro" + Convert.ToString(lastRef);
+            ConfiguredProduct configuredProduct = _configuredProductRepository.GetByReference(configuredDto.Reference);
+            if (configuredProduct != null)
+            {
+                validationOutput = new ValidationOutputBadRequest();
+                validationOutput.AddError("Configured Product's reference", "There are already configured product with the given reference");
+                return validationOutput;
+            }
 
             //1.
             validationOutput = _configuredProductDTOValidator.DTOReferenceIsValid(configuredDto.Reference);
@@ -655,13 +659,17 @@ namespace MerryClosets.Services.EF
 
             }
             var category_products = new List<CategoryProductDto>();
-            foreach(var product in productsAvailableFinal){
+            foreach (var product in productsAvailableFinal)
+            {
                 var categoryName = _categoryRepository.GetByReference(product.CategoryReference).Name;
                 CategoryProductDto cpd = new CategoryProductDto(categoryName);
-                if(!category_products.Contains(cpd)){
+                if (!category_products.Contains(cpd))
+                {
                     cpd.Products.Add(product);
                     category_products.Add(cpd);
-                } else {
+                }
+                else
+                {
                     int index = category_products.IndexOf(cpd);
                     category_products[index].Products.Add(product);
                 }
@@ -671,6 +679,18 @@ namespace MerryClosets.Services.EF
             return validationOutput;
         }
 
+        public IEnumerable<ConfiguredProductDto> GetAvailableToCollections()
+        {
+            List<ConfiguredProductDto> returnList = new List<ConfiguredProductDto>();
+            List<ConfiguredProduct> list = _configuredProductRepository.GetAvailablesToCollection();
+            foreach (var configuredProduct in list)
+            {
+                returnList.Add(_mapper.Map<ConfiguredProductDto>(configuredProduct));
+            }
+
+            return returnList;
+        }
+        
         private bool ProductFitsConfigured(List<DimensionValues> productDimensions,
             ConfiguredDimension configuredDimension)
         {

@@ -30,7 +30,6 @@ namespace MerryClosets.Models.DTO.DTOValidators
             }*/
             ValidationOutput validationOutput = new ValidationOutputBadRequest();
             ConfiguredMaterialDtoIsValid(consideredDto.ConfiguredMaterial, validationOutput);
-
             ConfiguredDimensionDtoIsValid(consideredDto.ConfiguredDimension, validationOutput);
             ProductReferenceIsValid(consideredDto.ProductReference, validationOutput);
             return validationOutput;
